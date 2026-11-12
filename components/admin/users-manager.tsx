@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import type { Role, SessionUser, UserDTO } from '@/lib/shared';
@@ -85,8 +86,10 @@ export function UsersManager({ users, me }: { users: UserDTO[]; me: SessionUser 
             {users.map((user) => (
               <tr key={user.id} className="border-b border-border last:border-0">
                 <td className="px-4 py-3">
-                  <p className="font-medium">{user.name ?? '—'}</p>
-                  <p className="text-meta text-fg-muted">{user.email}</p>
+                  <Link href={`/admin/users/${user.id}`} className="group block">
+                    <p className="font-medium group-hover:underline">{user.name ?? user.email}</p>
+                    <p className="text-meta text-fg-muted">{user.email}</p>
+                  </Link>
                 </td>
                 <td className="px-4 py-3">
                   <Select
@@ -106,6 +109,9 @@ export function UsersManager({ users, me }: { users: UserDTO[]; me: SessionUser 
                 <td className="px-4 py-3 text-fg-muted">{formatDate(user.createdAt)}</td>
                 <td className="px-4 py-3">{user.active ? 'Active' : <span className="text-fg-subtle">Deactivated</span>}</td>
                 <td className="px-4 py-3 text-right whitespace-nowrap">
+                  <Link href={`/admin/users/${user.id}`} className="mr-1 inline-flex h-8 items-center rounded-md px-3 text-[13px] font-medium text-fg-muted hover:bg-muted hover:text-fg">
+                    View tasks
+                  </Link>
                   <Button variant="ghost" size="sm" onClick={() => setPasswordFor(user)}>
                     Set password
                   </Button>

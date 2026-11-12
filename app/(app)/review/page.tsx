@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Inbox } from 'lucide-react';
-import type { ProjectDTO, ReviewQueueItemDTO, TagDTO } from '@/lib/shared';
+import type { ProjectDTO, ReviewQueueItemDTO, TagDTO, UserDTO } from '@/lib/shared';
 import { FilterBar } from '@/components/filter-bar';
 import { StatusBadge, TagChip } from '@/components/ui/badges';
 import { Card, PageHeader, tableHead } from '@/components/ui/card';
@@ -10,7 +10,7 @@ import { serverApi } from '@/lib/server-api';
 import { requireRole } from '@/lib/session';
 
 export default async function ReviewQueuePage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
-  await requireRole(['ADMIN', 'REVIEWER']);
+  const viewer = await requireRole(['ADMIN', 'REVIEWER']);
   const params = await searchParams;
   const query = new URLSearchParams(Object.entries(params).filter(([, v]) => v) as [string, string][]).toString();
   const [items, projects, tags] = await Promise.all([
@@ -18,6 +18,8 @@ export default async function ReviewQueuePage({ searchParams }: { searchParams: 
     serverApi<ProjectDTO[]>('/projects'),
     serverApi<TagDTO[]>('/tags'),
   ]);
+  const people =
+    viewer.role === 'ADMIN' ? (await serverApi<UserDTO[]>('/admin/users')).map((u) => ({ value: u.id, label: u.name ?? u.email })) : [];
 
   return (
     <div>
@@ -36,6 +38,7 @@ export default async function ReviewQueuePage({ searchParams }: { searchParams: 
           },
           { name: 'projectId', label: 'Project', options: projects.map((p) => ({ value: p.id, label: p.name })) },
           { name: 'tagId', label: 'Tag', options: tags.map((t) => ({ value: t.id, label: t.name })) },
+          ...(viewer.role === 'ADMIN' ? [{ name: 'raterId', label: 'Person', options: people, allLabel: 'Everyone' }] : []),
         ]}
       />
       {items.length === 0 ? (
@@ -64,7 +67,15 @@ export default async function ReviewQueuePage({ searchParams }: { searchParams: 
                       ))}
                     </div>
                   </td>
-                  <td className="px-4 py-3">{item.raterName ?? item.raterEmail}</td>
+                  <td className="px-4 py-3">
+                    {viewer.role === 'ADMIN' ? (
+                      <Link href={`/admin/users/${item.raterId}`} className="hover:underline">
+                        {item.raterName ?? item.raterEmail}
+                      </Link>
+                    ) : (
+                      (item.raterName ?? item.raterEmail)
+                    )}
+                  </td>
                   <td className="px-4 py-3 text-fg-muted">{formatDateTime(item.submittedAt)}</td>
                   <td className="px-4 py-3">
                     <StatusBadge status={item.status} />
