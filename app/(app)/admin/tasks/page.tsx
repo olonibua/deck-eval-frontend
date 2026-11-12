@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ClipboardList, Plus } from 'lucide-react';
+import { ClipboardList, Plus, Sparkles } from 'lucide-react';
 import type { ProjectDTO, TagDTO, TaskSummaryDTO } from '@/lib/shared';
 import { FilterBar } from '@/components/filter-bar';
 import { PriorityBadge, StatusBadge, TagChip } from '@/components/ui/badges';
@@ -24,9 +24,20 @@ export default async function AdminTasksPage({ searchParams }: { searchParams: P
         title="Tasks"
         meta={`${tasks.length} tasks`}
         actions={
-          <Link href="/admin/tasks/new" className="inline-flex h-10 items-center gap-2 rounded-sm bg-yellow px-4 text-sm font-medium text-cocoa transition hover:-translate-y-px">
-            <Plus className="h-4 w-4" aria-hidden /> New task
-          </Link>
+          <>
+            <Link
+              href="/admin/tasks/new"
+              className="inline-flex h-10 items-center gap-2 rounded-sm bg-surface px-4 text-sm font-medium shadow-[inset_0_0_0_1.5px_var(--ink)] transition hover:-translate-y-px"
+            >
+              <Plus className="h-4 w-4" aria-hidden /> New task
+            </Link>
+            <Link
+              href="/admin/tasks/assistant"
+              className="inline-flex h-10 items-center gap-2 rounded-sm bg-yellow px-4 text-sm font-medium text-cocoa transition hover:-translate-y-px"
+            >
+              <Sparkles className="h-4 w-4" aria-hidden /> New task from files
+            </Link>
+          </>
         }
       />
       <FilterBar
