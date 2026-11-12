@@ -14,7 +14,7 @@ import { PriorityBadge, ResponseChip, StatusBadge } from '../ui/badges';
 import { Card } from '../ui/card';
 import { useConfirm } from '../ui/dialog-provider';
 import { FileChip } from '../ui/file-chip';
-import { Input, Label } from '../ui/form';
+import { Label } from '../ui/form';
 import { RubricRenderer } from '../workspace/rubric-renderer';
 import { BasicsForm, basicsFromTask } from './basics-form';
 import { Dropzone } from './dropzone';
@@ -313,9 +313,8 @@ function AssignmentStep({
   fields: RubricFieldDef[];
   onSaved: (task: TaskDetailDTO) => void;
 }) {
-  const [who, setWho] = useState<'open' | 'picked' | 'team'>(task.sharedSheet ? 'team' : task.openQueue ? 'open' : 'picked');
+  const [openQueue, setOpenQueue] = useState(task.openQueue);
   const [assigneeIds, setAssigneeIds] = useState(task.assigneeIds);
-  const [ratersNeeded, setRatersNeeded] = useState(task.ratersNeeded);
   const [busy, setBusy] = useState(false);
   const [previewTab, setPreviewTab] = useState<string | null>(task.responses[0]?.id ?? null);
 
@@ -323,48 +322,30 @@ function AssignmentStep({
     <div className="grid gap-8 lg:grid-cols-2">
       <div className="space-y-5">
         <h2 className="text-section font-medium">Assignment</h2>
+        <p className="text-meta text-fg-muted">
+          Everyone who joins this task works on one shared sheet together, sees each other type live, and submits once.
+        </p>
         <fieldset className="space-y-2">
-          <legend className="sr-only">Who can pick this up</legend>
+          <legend className="sr-only">Who can join</legend>
           <label className="flex items-start gap-2.5">
-            <input type="radio" name="queue" className="mt-1 accent-[var(--primary)]" checked={who === 'open'} onChange={() => setWho('open')} />
+            <input type="radio" name="queue" className="mt-1 accent-[var(--primary)]" checked={openQueue} onChange={() => setOpenQueue(true)} />
             <span>
-              <span className="font-medium">Open queue</span>
-              <span className="block text-meta text-fg-muted">Any rater can claim it until it has enough raters. Raters picked below always see it.</span>
+              <span className="font-medium">Open to all raters</span>
+              <span className="block text-meta text-fg-muted">Any rater can join the sheet. The people picked below always see it.</span>
             </span>
           </label>
           <label className="flex items-start gap-2.5">
-            <input type="radio" name="queue" className="mt-1 accent-[var(--primary)]" checked={who === 'picked'} onChange={() => setWho('picked')} />
+            <input type="radio" name="queue" className="mt-1 accent-[var(--primary)]" checked={!openQueue} onChange={() => setOpenQueue(false)} />
             <span>
-              <span className="font-medium">Specific raters only</span>
-              <span className="block text-meta text-fg-muted">Only the raters picked below can see it. Each one rates it on their own.</span>
-            </span>
-          </label>
-          <label className="flex items-start gap-2.5">
-            <input type="radio" name="queue" className="mt-1 accent-[var(--primary)]" checked={who === 'team'} onChange={() => setWho('team')} />
-            <span>
-              <span className="font-medium">A team on one shared sheet</span>
-              <span className="block text-meta text-fg-muted">
-                The raters picked below work on the same answers together and see each other type live. They submit once, and it counts as one rating.
-              </span>
+              <span className="font-medium">Only the people picked below</span>
+              <span className="block text-meta text-fg-muted">Only they can see and join the sheet. Admins can always join.</span>
             </span>
           </label>
         </fieldset>
-        <div className="w-40">
-          <Label htmlFor="ratersNeeded">Raters needed</Label>
-          <Input
-            id="ratersNeeded"
-            type="number"
-            min={1}
-            max={50}
-            value={who === 'team' ? 1 : ratersNeeded}
-            disabled={who === 'team'}
-            onChange={(e) => setRatersNeeded(Number(e.target.value))}
-          />
-        </div>
         <fieldset>
-          <legend className="mb-1.5 text-sm font-medium">{who === 'team' ? 'Team members' : 'Assigned raters'}</legend>
+          <legend className="mb-1.5 text-sm font-medium">People on this task</legend>
           <div className="max-h-64 space-y-1 overflow-y-auto rounded-md border border-border p-2">
-            {raters.length === 0 && <p className="p-2 text-sm text-fg-muted">No raters yet. Invite some from Users.</p>}
+            {raters.length === 0 && <p className="p-2 text-sm text-fg-muted">No people yet. Invite some from Users.</p>}
             {raters.map((rater) => (
               <label key={rater.id} className="flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-subtle">
                 <input
@@ -375,6 +356,7 @@ function AssignmentStep({
                 />
                 {rater.name ?? rater.email}
                 <span className="text-meta text-fg-subtle">{rater.email}</span>
+                {rater.role !== 'RATER' && <span className="ml-auto text-meta text-fg-muted">{rater.role === 'ADMIN' ? 'Admin' : 'Reviewer'}</span>}
               </label>
             ))}
           </div>
@@ -383,12 +365,7 @@ function AssignmentStep({
           loading={busy}
           onClick={async () => {
             setBusy(true);
-            const updated = await attempt(() => api.put<TaskDetailDTO>(`/admin/tasks/${task.id}/assignment`, {
-                openQueue: who === 'open',
-                sharedSheet: who === 'team',
-                assigneeIds,
-                ratersNeeded: who === 'team' ? 1 : ratersNeeded,
-              }), 'Assignment saved');
+            const updated = await attempt(() => api.put<TaskDetailDTO>(`/admin/tasks/${task.id}/assignment`, { openQueue, assigneeIds }), 'Assignment saved');
             setBusy(false);
             if (updated) onSaved(updated);
           }}

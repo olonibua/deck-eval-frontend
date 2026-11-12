@@ -83,7 +83,7 @@ export function Workspace({
   const [escalateNote, setEscalateNote] = useState('');
   const [comments, setComments] = useState<ReviewCommentDTO[]>(submission?.comments ?? []);
 
-  const shared = task.sharedSheet && mode === 'rate' && submission !== null;
+  const shared = mode === 'rate' && submission !== null;
   const autosave = useAutosave(submission?.id ?? null, editable, shared);
   const live = useLiveSheet({
     submissionId: submission?.id ?? null,
@@ -452,12 +452,10 @@ export function Workspace({
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-sky px-4 py-3">
             <p className="flex items-center gap-2 text-sm text-cocoa">
               <Info className="h-4 w-4" aria-hidden />
-              {task.sharedSheet
-                ? 'This deck is rated by a team on one shared sheet. Join to work on it live with your teammates.'
-                : "You haven't started this task yet. Claim it to start rating."}
+              Everyone on this task rates it together on one shared sheet. Join to work on it live.
             </p>
             <Button size="sm" onClick={claim} loading={claiming}>
-              {task.sharedSheet ? 'Join the team' : 'Start task'}
+              Join
             </Button>
           </div>
         )}

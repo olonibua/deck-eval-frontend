@@ -16,7 +16,6 @@ function blankDraft(projects: ProjectDTO[]): TaskDraft {
     priority: 2,
     tagNames: [],
     dueAt: null,
-    ratersNeeded: 1,
     instructionsHtml: '',
     userRequestHtml: '',
     files: [],

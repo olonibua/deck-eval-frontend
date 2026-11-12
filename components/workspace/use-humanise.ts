@@ -18,7 +18,7 @@ import { runJob } from '@/lib/jobs';
 
 export const MODE_LABELS: Record<HumaniseMode, string> = { chatgpt: 'ChatGPT humanise', voice: 'Human humanise' };
 
-export type HumaniseInfo = Pick<HumanisedText, 'score' | 'missing' | 'applied'> & { mode: HumaniseMode };
+export type HumaniseInfo = Pick<HumanisedText, 'score' | 'missing' | 'applied' | 'rounds'> & { mode: HumaniseMode };
 
 interface Options {
   fields: RubricFieldDef[];
@@ -28,14 +28,20 @@ interface Options {
 }
 
 function summary(result: HumaniseResult): string {
-  const kept = result.items.filter((i) => !i.applied).length;
-  const low = result.items.filter((i) => i.applied && i.score < 10).length;
-  const parts = [`Rewrote ${result.items.length - kept} of ${result.items.length + result.failed.length} boxes.`];
-  if (low) parts.push(`${low} scored below 10/10.`);
-  if (kept) parts.push(`${kept} kept the original because a key point would have been lost.`);
+  const rewritten = result.items.filter((i) => i.applied && i.rounds > 0).length;
+  const already = result.items.filter((i) => i.applied && i.rounds === 0).length;
+  const lostPoint = result.items.filter((i) => !i.applied && i.missing.length).length;
+  const lowScore = result.items.filter((i) => !i.applied && !i.missing.length).length;
+  const parts = [`Rewrote ${rewritten} of ${result.items.length + result.failed.length} boxes, all at 10/10.`];
+  if (already) parts.push(`${already} already read 10/10 and were left as they are.`);
+  if (lowScore) parts.push(`${lowScore} kept the original because no rewrite reached 10/10.`);
+  if (lostPoint) parts.push(`${lostPoint} kept the original because a key point would have been lost.`);
   if (result.failed.length) parts.push(`${result.failed.length} failed.`);
-  if (!low && !kept && !result.failed.length) parts.push('All scored 10/10 with every key point kept.');
   return parts.join(' ');
+}
+
+export function keptReason(item: Pick<HumanisedText, 'score' | 'missing'>): string {
+  return item.missing.length ? 'the rewrite kept losing a key point' : `the best rewrite reached ${item.score}/10, not 10/10`;
 }
 
 export function useHumanise({ fields, responses, answers, applyAnswers }: Options) {
@@ -72,7 +78,7 @@ export function useHumanise({ fields, responses, answers, applyAnswers }: Option
       latest.current.applyAnswers(changes);
       setInfo((current) => ({
         ...current,
-        ...Object.fromEntries(result.items.map((i) => [i.key, { score: i.score, missing: i.missing, applied: i.applied, mode }])),
+        ...Object.fromEntries(result.items.map((i) => [i.key, { score: i.score, missing: i.missing, applied: i.applied, rounds: i.rounds, mode }])),
       }));
       const message = items.length === 1 ? null : summary(result);
       const single = result.items[0];
@@ -80,9 +86,11 @@ export function useHumanise({ fields, responses, answers, applyAnswers }: Option
         message ??
         (result.failed[0]
           ? `Rewrite failed: ${result.failed[0].error}`
-          : single.applied
-            ? `Rewritten. Human score ${single.score}/10.`
-            : 'Kept your text: the rewrite kept losing a key point.');
+          : !single.applied
+            ? `Kept your text: ${keptReason(single)}.`
+            : single.rounds === 0
+              ? 'Already reads 10/10. Left as it is.'
+              : `Rewritten. Human score ${single.score}/10.`);
       const undo = Object.keys(changes).length ? { label: 'Undo', onClick: () => latest.current.applyAnswers(previous) } : undefined;
       if (result.failed.length && !result.items.length) toast.error(text);
       else toast.success(text, { action: undo, duration: 10_000 });

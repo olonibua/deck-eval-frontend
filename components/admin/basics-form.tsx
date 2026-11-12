@@ -15,7 +15,6 @@ export interface BasicsValues {
   priority: number;
   tagIds: string[];
   dueAt: string;
-  ratersNeeded: number;
 }
 
 const TAG_COLORS = ['#4176C5', '#EC905D', '#C4597C', '#8FD1DC', '#F3B2AF', '#DCE88C', '#8DD0FB', '#F8E87D'];
@@ -27,7 +26,6 @@ export function basicsFromTask(task?: TaskDetailDTO, projects: ProjectDTO[] = []
     priority: task?.priority ?? 2,
     tagIds: task?.tags.map((t) => t.id) ?? [],
     dueAt: task?.dueAt ? task.dueAt.slice(0, 10) : '',
-    ratersNeeded: task?.ratersNeeded ?? 1,
   };
 }
 
@@ -105,10 +103,6 @@ export function BasicsForm({
         <div>
           <Label htmlFor="due">Due date</Label>
           <Input id="due" type="date" value={values.dueAt} onChange={(e) => set('dueAt', e.target.value)} />
-        </div>
-        <div>
-          <Label htmlFor="raters">Raters needed</Label>
-          <Input id="raters" type="number" min={1} max={50} value={values.ratersNeeded} onChange={(e) => set('ratersNeeded', Number(e.target.value))} />
         </div>
       </div>
       <fieldset>

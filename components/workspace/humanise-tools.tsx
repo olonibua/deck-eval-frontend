@@ -5,13 +5,13 @@ import { AlertTriangle, ChevronDown, Loader2, Wand2 } from 'lucide-react';
 import { HUMANISE_MODES, type HumaniseMode } from '@/lib/shared';
 import { cn } from '@/lib/cn';
 import { Button } from '../ui/button';
-import { MODE_LABELS, type HumaniseInfo } from './use-humanise';
+import { keptReason, MODE_LABELS, type HumaniseInfo } from './use-humanise';
 
 function ScoreChip({ info }: { info: HumaniseInfo }) {
   if (!info.applied) {
     return (
       <span className="inline-flex items-center gap-1 rounded-pill bg-pink px-2 py-0.5 text-[12px] text-cocoa" title={info.missing.join('\n')}>
-        <AlertTriangle className="h-3 w-3" aria-hidden /> Kept original: a key point kept getting lost
+        <AlertTriangle className="h-3 w-3" aria-hidden /> Kept original: {keptReason(info)}
       </span>
     );
   }

@@ -42,7 +42,7 @@ async function createTeamTask(admin: Page) {
   }
 
   await admin.goto(`/admin/tasks/${taskId}/edit?step=5`);
-  await admin.getByLabel('A team on one shared sheet').check();
+  await admin.getByLabel('Only the people picked below').check();
   await admin.getByLabel(/Rae Rater/).check();
   await admin.getByLabel(/Sam Rater/).check();
   await admin.getByRole('button', { name: 'Save assignment' }).click();
@@ -62,7 +62,7 @@ test('two teammates edit one shared sheet live', async ({ browser }) => {
   const sam = await signedIn(browser, SAM);
   for (const page of [rae, sam]) {
     await page.goto(`/tasks/${taskId}`);
-    await page.getByRole('button', { name: 'Join the team' }).click();
+    await page.getByRole('button', { name: 'Join', exact: true }).click();
     await expect(page.getByRole('button', { name: 'Submit' })).toBeVisible();
   }
 

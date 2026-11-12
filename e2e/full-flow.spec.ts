@@ -65,7 +65,7 @@ test('admin publishes, rater submits, reviewer returns then approves, admin expo
 
   await signIn(page, RATER);
   await page.goto(`/tasks/${taskId}`);
-  await page.getByRole('button', { name: 'Start task' }).click();
+  await page.getByRole('button', { name: 'Join', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Submit' })).toBeVisible();
 
   for (const label of ['A', 'B', 'C']) {

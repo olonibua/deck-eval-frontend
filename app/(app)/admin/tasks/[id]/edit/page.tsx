@@ -17,7 +17,7 @@ export default async function EditTaskPage({ params }: { params: Promise<{ id: s
       initialTask={task}
       projects={projects}
       tags={tags}
-      raters={users.filter((u) => u.active && u.role === 'RATER')}
+      raters={users.filter((u) => u.active)}
       fields={template.fields}
     />
   );

@@ -201,17 +201,6 @@ export function DraftReview({ draft, version, files, projects, tags, creating, o
             <Label htmlFor="draft-due">Due date</Label>
             <Input id="draft-due" type="date" value={draft.dueAt ?? ''} onChange={(e) => set('dueAt', e.target.value || null)} />
           </div>
-          <div>
-            <Label htmlFor="draft-raters">Raters needed</Label>
-            <Input
-              id="draft-raters"
-              type="number"
-              min={1}
-              max={50}
-              value={draft.ratersNeeded}
-              onChange={(e) => set('ratersNeeded', Math.max(1, Number(e.target.value) || 1))}
-            />
-          </div>
         </div>
         <div>
           <Label>Tags</Label>
