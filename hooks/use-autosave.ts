@@ -18,6 +18,7 @@ interface PendingAnswer {
 }
 
 const DEBOUNCE_MS = 800;
+const LIVE_DEBOUNCE_MS = 250;
 const storageKey = (submissionId: string) => `de:pending:${submissionId}`;
 
 function readPending(submissionId: string): Record<string, PendingAnswer> {
@@ -45,9 +46,10 @@ export function restorePending(submissionId: string | null, answers: AnswerMap):
   return restored;
 }
 
-export function useAutosave(submissionId: string | null, enabled: boolean) {
+export function useAutosave(submissionId: string | null, enabled: boolean, live = false) {
   const [state, setState] = useState<SaveState>({ kind: 'idle' });
   const pending = useRef<Record<string, PendingAnswer>>({});
+  const savedAt = useRef<Record<string, string>>({});
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inFlight = useRef<Promise<void> | null>(null);
 
@@ -74,7 +76,9 @@ export function useAutosave(submissionId: string | null, enabled: boolean) {
           const body = await res.json().catch(() => ({}));
           throw new ApiError(res.status, body.message ?? 'Save failed');
         }
+        const { savedAt: at } = (await res.json()) as { savedAt: string };
         for (const [key, item] of entries) {
+          savedAt.current[key] = at;
           if (pending.current[key] === item) delete pending.current[key];
         }
         writePending(submissionId, pending.current);
@@ -103,10 +107,13 @@ export function useAutosave(submissionId: string | null, enabled: boolean) {
       writePending(submissionId, pending.current);
       setState({ kind: 'saving' });
       if (timer.current) clearTimeout(timer.current);
-      timer.current = setTimeout(() => void flush(), DEBOUNCE_MS);
+      timer.current = setTimeout(() => void flush(), live ? LIVE_DEBOUNCE_MS : DEBOUNCE_MS);
     },
-    [submissionId, enabled, flush],
+    [submissionId, enabled, flush, live],
   );
+
+  const isUnsent = useCallback((key: string) => key in pending.current, []);
+  const lastSavedAt = useCallback((key: string) => savedAt.current[key] ?? null, []);
 
   useEffect(() => {
     if (!submissionId || !enabled) return;
@@ -126,5 +133,5 @@ export function useAutosave(submissionId: string | null, enabled: boolean) {
     };
   }, [submissionId, enabled, flush, send]);
 
-  return { state, queue, flush };
+  return { state, queue, flush, isUnsent, lastSavedAt };
 }

@@ -17,6 +17,7 @@ export function RationaleField({
   readOnly,
   invalid,
   independenceCheck,
+  ownLabel,
 }: {
   id: string;
   label: string;
@@ -26,19 +27,32 @@ export function RationaleField({
   readOnly?: boolean;
   invalid?: boolean;
   independenceCheck?: boolean;
+  ownLabel?: string | null;
 }) {
   const ref = useRef<HTMLTextAreaElement>(null);
+  const shown = useRef(value);
+  const selection = useRef<[number, number]>([0, 0]);
 
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
     el.style.height = 'auto';
     el.style.height = `${Math.min(MAX_HEIGHT, Math.max(MIN_HEIGHT, el.scrollHeight + 2))}px`;
+    if (value !== shown.current && document.activeElement === el) {
+      const [start, end] = selection.current;
+      el.setSelectionRange(keepCaret(shown.current, value, start), keepCaret(shown.current, value, end));
+    }
+    shown.current = value;
   }, [value]);
+
+  function remember() {
+    const el = ref.current;
+    if (el) selection.current = [el.selectionStart, el.selectionEnd];
+  }
 
   const length = value.trim().length;
   const short = config.minChars ? length < config.minChars : false;
-  const warnings = independenceCheck && value ? findComparativeWords(value) : [];
+  const warnings = independenceCheck && value ? findComparativeWords(value, ownLabel) : [];
 
   return (
     <div>
@@ -52,7 +66,12 @@ export function RationaleField({
           value={value}
           maxLength={config.maxChars}
           placeholder={readOnly ? '' : config.placeholder}
-          onChange={(e) => onChange(e.target.value)}
+          onSelect={remember}
+          onChange={(e) => {
+            shown.current = e.target.value;
+            onChange(e.target.value);
+            remember();
+          }}
           className={cn(
             'block w-full resize-none rounded-lg border-[1.5px] bg-surface px-3 pt-2 pb-6 text-[15px] leading-[1.5] text-fg transition-colors',
             invalid ? 'border-danger' : 'border-border-strong hover:border-fg-subtle focus-visible:border-fg',
@@ -79,4 +98,11 @@ export function RationaleField({
       )}
     </div>
   );
+}
+
+function keepCaret(before: string, after: string, caret: number) {
+  let same = 0;
+  while (same < before.length && same < after.length && before[same] === after[same]) same++;
+  if (caret <= same) return caret;
+  return Math.max(same, caret + after.length - before.length);
 }

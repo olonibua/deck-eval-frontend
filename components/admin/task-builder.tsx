@@ -313,7 +313,7 @@ function AssignmentStep({
   fields: RubricFieldDef[];
   onSaved: (task: TaskDetailDTO) => void;
 }) {
-  const [openQueue, setOpenQueue] = useState(task.openQueue);
+  const [who, setWho] = useState<'open' | 'picked' | 'team'>(task.sharedSheet ? 'team' : task.openQueue ? 'open' : 'picked');
   const [assigneeIds, setAssigneeIds] = useState(task.assigneeIds);
   const [ratersNeeded, setRatersNeeded] = useState(task.ratersNeeded);
   const [busy, setBusy] = useState(false);
@@ -326,26 +326,43 @@ function AssignmentStep({
         <fieldset className="space-y-2">
           <legend className="sr-only">Who can pick this up</legend>
           <label className="flex items-start gap-2.5">
-            <input type="radio" name="queue" className="mt-1 accent-[var(--primary)]" checked={openQueue} onChange={() => setOpenQueue(true)} />
+            <input type="radio" name="queue" className="mt-1 accent-[var(--primary)]" checked={who === 'open'} onChange={() => setWho('open')} />
             <span>
               <span className="font-medium">Open queue</span>
               <span className="block text-meta text-fg-muted">Any rater can claim it until it has enough raters. Raters picked below always see it.</span>
             </span>
           </label>
           <label className="flex items-start gap-2.5">
-            <input type="radio" name="queue" className="mt-1 accent-[var(--primary)]" checked={!openQueue} onChange={() => setOpenQueue(false)} />
+            <input type="radio" name="queue" className="mt-1 accent-[var(--primary)]" checked={who === 'picked'} onChange={() => setWho('picked')} />
             <span>
               <span className="font-medium">Specific raters only</span>
-              <span className="block text-meta text-fg-muted">Only the raters picked below can see it.</span>
+              <span className="block text-meta text-fg-muted">Only the raters picked below can see it. Each one rates it on their own.</span>
+            </span>
+          </label>
+          <label className="flex items-start gap-2.5">
+            <input type="radio" name="queue" className="mt-1 accent-[var(--primary)]" checked={who === 'team'} onChange={() => setWho('team')} />
+            <span>
+              <span className="font-medium">A team on one shared sheet</span>
+              <span className="block text-meta text-fg-muted">
+                The raters picked below work on the same answers together and see each other type live. They submit once, and it counts as one rating.
+              </span>
             </span>
           </label>
         </fieldset>
         <div className="w-40">
           <Label htmlFor="ratersNeeded">Raters needed</Label>
-          <Input id="ratersNeeded" type="number" min={1} max={50} value={ratersNeeded} onChange={(e) => setRatersNeeded(Number(e.target.value))} />
+          <Input
+            id="ratersNeeded"
+            type="number"
+            min={1}
+            max={50}
+            value={who === 'team' ? 1 : ratersNeeded}
+            disabled={who === 'team'}
+            onChange={(e) => setRatersNeeded(Number(e.target.value))}
+          />
         </div>
         <fieldset>
-          <legend className="mb-1.5 text-sm font-medium">Assigned raters</legend>
+          <legend className="mb-1.5 text-sm font-medium">{who === 'team' ? 'Team members' : 'Assigned raters'}</legend>
           <div className="max-h-64 space-y-1 overflow-y-auto rounded-md border border-border p-2">
             {raters.length === 0 && <p className="p-2 text-sm text-fg-muted">No raters yet. Invite some from Users.</p>}
             {raters.map((rater) => (
@@ -366,7 +383,12 @@ function AssignmentStep({
           loading={busy}
           onClick={async () => {
             setBusy(true);
-            const updated = await attempt(() => api.put<TaskDetailDTO>(`/admin/tasks/${task.id}/assignment`, { openQueue, assigneeIds, ratersNeeded }), 'Assignment saved');
+            const updated = await attempt(() => api.put<TaskDetailDTO>(`/admin/tasks/${task.id}/assignment`, {
+                openQueue: who === 'open',
+                sharedSheet: who === 'team',
+                assigneeIds,
+                ratersNeeded: who === 'team' ? 1 : ratersNeeded,
+              }), 'Assignment saved');
             setBusy(false);
             if (updated) onSaved(updated);
           }}

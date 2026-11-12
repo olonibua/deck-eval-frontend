@@ -1,5 +1,6 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import type { CompletionState } from '@/lib/shared';
 import { cn } from '@/lib/cn';
 
@@ -7,6 +8,7 @@ export interface TabItem {
   id: string;
   label: string;
   completion?: CompletionState;
+  extra?: ReactNode;
 }
 
 const DOT: Record<CompletionState, { className: string; text: string }> = {
@@ -59,6 +61,7 @@ export function SegmentedTabs({
                 <span className="sr-only">({DOT[item.completion].text})</span>
               </>
             )}
+            {item.extra}
           </button>
         );
       })}

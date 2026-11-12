@@ -44,7 +44,9 @@ test('admin publishes, rater submits, reviewer returns then approves, admin expo
   await page.getByRole('textbox', { name: 'Instructions' }).fill('Please rate each response independently.');
   await page.getByRole('textbox', { name: 'User request' }).fill('Make a short deck about our quarter.');
   await page.getByRole('button', { name: 'Save and continue' }).click();
+  await page.waitForURL(/step=3/);
   await page.getByRole('button', { name: 'Continue' }).click();
+  await page.waitForURL(/step=4/);
 
   for (const label of ['A', 'B', 'C']) {
     await page.getByRole('button', { name: 'Add response' }).click();

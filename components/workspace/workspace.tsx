@@ -11,15 +11,18 @@ import {
   needsIndependenceCheck,
   progressFor,
   validateAnswers,
+  LIVE_AWAY_MS,
   type AnswerMap,
   type AnswerValue,
   type FieldIssue,
+  type FieldRef,
   type ReviewCommentDTO,
   type RubricFieldDef,
   type WorkspaceDTO,
 } from '@/lib/shared';
 import { restorePending, useAutosave } from '@/hooks/use-autosave';
 import { useActiveTimer } from '@/hooks/use-active-timer';
+import { useLiveSheet } from '@/hooks/use-live-sheet';
 import { api } from '@/lib/client-api';
 import { ApiError } from '@/lib/errors';
 import { formatDuration } from '@/lib/format';
@@ -41,6 +44,7 @@ import { HumaniseAllMenu, HumaniseTools } from './humanise-tools';
 import { HUMANISE_MODES } from '@/lib/shared';
 import { MODE_LABELS, useHumanise } from './use-humanise';
 import { useQc } from './use-qc';
+import { Avatar, personColour, TeamBar } from './team-bar';
 import { useConfirm } from '../ui/dialog-provider';
 import { MoreMenu, type MenuItem } from '../ui/more-menu';
 
@@ -48,7 +52,19 @@ export type WorkspaceMode = 'rate' | 'review' | 'preview';
 
 const RANKING_TAB = 'ranking';
 
-export function Workspace({ data, mode, backHref, canQc = false }: { data: WorkspaceDTO; mode: WorkspaceMode; backHref: string; canQc?: boolean }) {
+export function Workspace({
+  data,
+  mode,
+  backHref,
+  canQc = false,
+  meId = '',
+}: {
+  data: WorkspaceDTO;
+  mode: WorkspaceMode;
+  backHref: string;
+  canQc?: boolean;
+  meId?: string;
+}) {
   const router = useRouter();
   const { task, fields, submission } = data;
   const responses = task.responses;
@@ -67,7 +83,29 @@ export function Workspace({ data, mode, backHref, canQc = false }: { data: Works
   const [escalateNote, setEscalateNote] = useState('');
   const [comments, setComments] = useState<ReviewCommentDTO[]>(submission?.comments ?? []);
 
-  const autosave = useAutosave(submission?.id ?? null, editable);
+  const shared = task.sharedSheet && mode === 'rate' && submission !== null;
+  const autosave = useAutosave(submission?.id ?? null, editable, shared);
+  const live = useLiveSheet({
+    submissionId: submission?.id ?? null,
+    enabled: shared && editable,
+    meId,
+    team: submission?.team ?? [],
+    viewing: activeTab,
+    isUnsent: autosave.isUnsent,
+    lastSavedAt: autosave.lastSavedAt,
+    onRemote: (changes) => {
+      setAnswers((current) => ({ ...current, ...changes }));
+      setIssues((current) => current.filter((i) => !(answerKey(i.fieldId, i.responseId) in changes)));
+    },
+    onStatus: (status) => {
+      if (status === 'SUBMITTED') toast.success('Your team submitted this sheet');
+      router.refresh();
+    },
+  });
+  const team = live.team;
+  const teammatesJoined = team.some((m) => m.joined && m.id !== meId);
+  const livePeople = live.presence.filter((p) => Date.now() - Date.parse(p.seenAt) <= LIVE_AWAY_MS);
+  const nameOf = (userId: string) => team.find((m) => m.id === userId)?.name ?? livePeople.find((p) => p.userId === userId)?.name ?? 'Teammate';
   const confirm = useConfirm();
   function applyAnswers(changes: AnswerMap) {
     setAnswers((current) => ({ ...current, ...changes }));
@@ -97,8 +135,10 @@ export function Workspace({ data, mode, backHref, canQc = false }: { data: Works
   );
 
   const tabs: TabItem[] = [
-    ...responses.map((r) => ({ id: r.id, label: `Response ${r.label}`, completion: submission ? completionState(progress(r.id)) : undefined })),
-    ...(hasTaskFields ? [{ id: RANKING_TAB, label: 'Ranking', completion: submission ? completionState(progress(null)) : undefined }] : []),
+    ...responses.map((r) => ({ id: r.id, label: `Response ${r.label}`, completion: submission ? completionState(progress(r.id)) : undefined, extra: tabPeople(r.id) })),
+    ...(hasTaskFields
+      ? [{ id: RANKING_TAB, label: 'Ranking', completion: submission ? completionState(progress(null)) : undefined, extra: tabPeople(RANKING_TAB) }]
+      : []),
   ];
 
   const activeResponse = responses.find((r) => r.id === activeTab) ?? null;
@@ -110,11 +150,59 @@ export function Workspace({ data, mode, backHref, canQc = false }: { data: Works
     if (!editable) return;
     const key = answerKey(field.id, responseId);
     setAnswers((current) => ({ ...current, [key]: value }));
+    live.markTyping();
     if (invalidKeys.has(key)) setIssues((current) => current.filter((i) => answerKey(i.fieldId, i.responseId) !== key));
     autosave.queue(field.id, responseId, value);
   }
 
-  function jumpTo(issue: FieldIssue) {
+  function describeView(viewing: string) {
+    const response = responses.find((r) => r.id === viewing);
+    return response ? `Response ${response.label}` : 'the ranking';
+  }
+
+  function describeField(ref: FieldRef) {
+    const label = fields.find((f) => f.id === ref.fieldId)?.label ?? 'a field';
+    return `${ref.responseId ? describeView(ref.responseId) : 'Ranking'} · ${label}`;
+  }
+
+  function trackFocus(event: React.FocusEvent) {
+    const el = (event.target as HTMLElement).closest<HTMLElement>('[data-live-field]');
+    live.setFocus(el ? { fieldId: el.dataset.liveField!, responseId: el.dataset.liveResponse || null } : null);
+  }
+
+  function jumpToLive(target: FieldRef | string) {
+    if (typeof target === 'string') setActiveTab(target);
+    else jumpTo(target);
+  }
+
+  function fieldActivity(field: RubricFieldDef, responseId: string | null) {
+    const here = livePeople.filter((p) => p.focus?.fieldId === field.id && (p.focus.responseId ?? null) === responseId);
+    if (here.length === 0) return null;
+    return (
+      <div className="flex flex-wrap gap-1.5">
+        {here.map((p) => (
+          <span key={p.userId} className={`inline-flex items-center gap-1.5 rounded-full py-0.5 pr-2.5 pl-0.5 text-[12px] font-medium text-cocoa ${personColour(p.userId, team)}`}>
+            <Avatar name={nameOf(p.userId)} colour={personColour(p.userId, team)} className="h-5 w-5 ring-0" />
+            {nameOf(p.userId)} {p.typing ? 'is typing…' : 'is here'}
+          </span>
+        ))}
+      </div>
+    );
+  }
+
+  function tabPeople(tabId: string) {
+    const here = livePeople.filter((p) => (p.focus ? (p.focus.responseId ?? RANKING_TAB) : p.viewing) === tabId);
+    if (here.length === 0) return undefined;
+    return (
+      <span className="flex -space-x-1.5">
+        {here.map((p) => (
+          <Avatar key={p.userId} name={nameOf(p.userId)} colour={personColour(p.userId, team)} className="h-5 w-5 text-[10px]" />
+        ))}
+      </span>
+    );
+  }
+
+  function jumpTo(issue: FieldRef) {
     setIssuesOpen(false);
     setActiveTab(issue.responseId ?? RANKING_TAB);
     if (window.matchMedia('(max-width: 1023px)').matches) setSheetOpen(true);
@@ -181,7 +269,7 @@ export function Workspace({ data, mode, backHref, canQc = false }: { data: Works
   async function unclaim() {
     await api.post(`/tasks/${task.id}/unclaim`);
     if (submission) localStorage.removeItem(`de:pending:${submission.id}`);
-    toast.success('Task returned to the queue');
+    toast.success(teammatesJoined ? 'You left the team sheet' : 'Task returned to the queue');
     router.push('/');
     router.refresh();
   }
@@ -227,33 +315,36 @@ export function Workspace({ data, mode, backHref, canQc = false }: { data: Works
         : undefined;
 
   const renderer = (
-    <RubricRenderer
-      fields={fields}
-      responseId={activeScope}
-      responses={responses}
-      answers={answers}
-      onChange={onChange}
-      readOnly={!editable}
-      comments={comments}
-      commentHandlers={commentHandlers}
-      invalidKeys={invalidKeys}
-      independenceCheck={independenceCheck}
-      textFooter={
-        aiTools
-          ? (field, responseId) => {
-              const key = answerKey(field.id, responseId);
-              return (
-                <HumaniseTools
-                  busyMode={humanise.busy[key]}
-                  info={humanise.info[key]}
-                  disabled={qc.running}
-                  onRun={(mode) => void humanise.runField(field, responseId, mode)}
-                />
-              );
-            }
-          : undefined
-      }
-    />
+    <div onFocusCapture={shared ? trackFocus : undefined} onBlurCapture={shared ? () => live.setFocus(null) : undefined}>
+      <RubricRenderer
+        fields={fields}
+        responseId={activeScope}
+        responses={responses}
+        answers={answers}
+        onChange={onChange}
+        readOnly={!editable}
+        comments={comments}
+        commentHandlers={commentHandlers}
+        invalidKeys={invalidKeys}
+        independenceCheck={independenceCheck}
+        activity={shared ? fieldActivity : undefined}
+        textFooter={
+          aiTools
+            ? (field, responseId) => {
+                const key = answerKey(field.id, responseId);
+                return (
+                  <HumaniseTools
+                    busyMode={humanise.busy[key]}
+                    info={humanise.info[key]}
+                    disabled={qc.running}
+                    onRun={(mode) => void humanise.runField(field, responseId, mode)}
+                  />
+                );
+              }
+            : undefined
+        }
+      />
+    </div>
   );
 
   const menuItems: MenuItem[] =
@@ -271,7 +362,13 @@ export function Workspace({ data, mode, backHref, canQc = false }: { data: Works
               ]
             : []),
           ...(editable ? [{ label: 'Escalate', icon: Flag, onSelect: () => setEscalateOpen(true), hint: 'Tell an admin something is wrong' }] : []),
-          ...(submission.status === 'DRAFT' ? [{ label: 'Unclaim', icon: Undo2, onSelect: () => setUnclaimOpen(true), hint: 'Give the task back to the queue' }] : []),
+          ...(submission.status === 'DRAFT'
+            ? [
+                teammatesJoined
+                  ? { label: 'Leave team', icon: Undo2, onSelect: () => setUnclaimOpen(true), hint: 'Your teammates keep the sheet' }
+                  : { label: 'Unclaim', icon: Undo2, onSelect: () => setUnclaimOpen(true), hint: 'Give the task back to the queue' },
+              ]
+            : []),
         ]
       : [];
 
@@ -299,7 +396,11 @@ export function Workspace({ data, mode, backHref, canQc = false }: { data: Works
             {mode === 'preview' && <span className="rounded-sm bg-sky px-2 py-1 text-meta font-medium text-cocoa">Preview as rater</span>}
             {mode === 'review' && submission && (
               <>
-                <span className="hidden text-meta text-fg-muted md:inline">{submission.raterName ?? submission.raterEmail}</span>
+                <span className="hidden text-meta text-fg-muted md:inline">
+                  {submission.team.length > 1
+                    ? submission.team.filter((m) => m.joined).map((m) => m.name).join(', ')
+                    : (submission.raterName ?? submission.raterEmail)}
+                </span>
                 <span className="hidden items-center gap-1 text-meta text-fg-muted md:inline-flex">
                   <Clock className="h-3.5 w-3.5" aria-hidden /> {formatDuration(submission.activeSeconds)}
                 </span>
@@ -326,7 +427,7 @@ export function Workspace({ data, mode, backHref, canQc = false }: { data: Works
                 {!editable && <StatusBadge status={submission.status} />}
                 {submission.status === 'DRAFT' && (
                   <Button variant="ghost" size="sm" className="hidden lg:inline-flex" onClick={() => setUnclaimOpen(true)}>
-                    <Undo2 className="h-4 w-4" aria-hidden /> Unclaim
+                    <Undo2 className="h-4 w-4" aria-hidden /> {teammatesJoined ? 'Leave team' : 'Unclaim'}
                   </Button>
                 )}
                 {editable && (
@@ -350,10 +451,13 @@ export function Workspace({ data, mode, backHref, canQc = false }: { data: Works
         {mode === 'rate' && !submission && (
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-sky px-4 py-3">
             <p className="flex items-center gap-2 text-sm text-cocoa">
-              <Info className="h-4 w-4" aria-hidden /> You haven&apos;t started this task yet. Claim it to start rating.
+              <Info className="h-4 w-4" aria-hidden />
+              {task.sharedSheet
+                ? 'This deck is rated by a team on one shared sheet. Join to work on it live with your teammates.'
+                : "You haven't started this task yet. Claim it to start rating."}
             </p>
             <Button size="sm" onClick={claim} loading={claiming}>
-              Start task
+              {task.sharedSheet ? 'Join the team' : 'Start task'}
             </Button>
           </div>
         )}
@@ -362,6 +466,18 @@ export function Workspace({ data, mode, backHref, canQc = false }: { data: Works
             <Undo2 className="h-4 w-4 shrink-0" aria-hidden />
             A reviewer sent this back. Their comments sit next to each field. Make your changes, then resubmit.
           </div>
+        )}
+
+        {shared && editable && (
+          <TeamBar
+            team={team}
+            meId={meId}
+            presence={live.presence}
+            lastEdit={live.lastEdit}
+            describeField={describeField}
+            describeView={describeView}
+            onJump={jumpToLive}
+          />
         )}
 
         {qc.running && (
@@ -505,9 +621,13 @@ export function Workspace({ data, mode, backHref, canQc = false }: { data: Works
       <ConfirmDialog
         open={unclaimOpen}
         onOpenChange={setUnclaimOpen}
-        title="Unclaim this task?"
-        description="Your answers so far will be deleted and the task goes back to the queue."
-        confirmLabel="Unclaim"
+        title={teammatesJoined ? 'Leave the team sheet?' : 'Unclaim this task?'}
+        description={
+          teammatesJoined
+            ? 'Your teammates keep everything written so far and can carry on without you.'
+            : 'Your answers so far will be deleted and the task goes back to the queue.'
+        }
+        confirmLabel={teammatesJoined ? 'Leave' : 'Unclaim'}
         destructive
         onConfirm={unclaim}
       />

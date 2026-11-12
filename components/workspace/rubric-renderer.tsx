@@ -35,6 +35,7 @@ export interface RubricRendererProps {
   invalidKeys?: Set<string>;
   independenceCheck?: boolean;
   textFooter?: (field: RubricFieldDef, responseId: string | null) => ReactNode;
+  activity?: (field: RubricFieldDef, responseId: string | null) => ReactNode;
 }
 
 export function fieldDomId(fieldId: string, responseId: string | null) {
@@ -69,6 +70,7 @@ export function RubricRenderer({
   invalidKeys,
   independenceCheck,
   textFooter,
+  activity,
 }: RubricRendererProps) {
   const scope = responseId ? 'PER_RESPONSE' : 'PER_TASK';
   const scoped = fields.filter((f) => f.scope === scope).sort((a, b) => a.order - b.order);
@@ -122,6 +124,7 @@ export function RubricRenderer({
               readOnly={readOnly}
               invalid={invalid(field)}
               independenceCheck={independenceCheck && scope === 'PER_RESPONSE'}
+              ownLabel={responses.find((r) => r.id === responseId)?.label ?? null}
             />
             {textFooter?.(field, responseId)}
           </>
@@ -182,6 +185,8 @@ export function RubricRenderer({
           <section
             key={primary.id}
             id={fieldDomId(primary.id, responseId)}
+            data-live-field={primary.id}
+            data-live-response={responseId ?? ''}
             className={cn('scroll-mt-32 space-y-3 rounded-md', (invalid(primary) || (explanation && invalid(explanation))) && 'ring-2 ring-danger/30 ring-offset-4 ring-offset-surface')}
           >
             <div className="flex items-start justify-between gap-2">
@@ -200,11 +205,20 @@ export function RubricRenderer({
               </div>
               {commentButton(primary)}
             </div>
+            {activity?.(primary, responseId)}
             {control(primary, primary.label)}
             {explanation && (
               <Fragment>
-                <div id={fieldDomId(explanation.id, responseId)} className="flex items-start gap-2 scroll-mt-32">
-                  <div className="min-w-0 flex-1">{control(explanation, `${primary.label} explanation`)}</div>
+                <div
+                  id={fieldDomId(explanation.id, responseId)}
+                  data-live-field={explanation.id}
+                  data-live-response={responseId ?? ''}
+                  className="flex items-start gap-2 scroll-mt-32"
+                >
+                  <div className="min-w-0 flex-1 space-y-1.5">
+                    {activity?.(explanation, responseId)}
+                    {control(explanation, `${primary.label} explanation`)}
+                  </div>
                   {commentButton(explanation)}
                 </div>
               </Fragment>
