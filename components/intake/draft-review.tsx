@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Lightbulb, X } from 'lucide-react';
-import { RESPONSE_LABELS, type DraftFileRole, type IntakeFileDTO, type ProjectDTO, type ResponseLabel, type TagDTO, type TaskDraft } from '@/lib/shared';
+import { RESPONSE_LABELS, responseLabelsIn, type DraftFileRole, type IntakeFileDTO, type ProjectDTO, type ResponseLabel, type TagDTO, type TaskDraft } from '@/lib/shared';
 import { RichTextEditor } from '../admin/rich-text-editor';
 import { Button } from '../ui/button';
 import { Card } from '../ui/card';
@@ -19,15 +19,20 @@ interface Props {
   onCreate: () => void;
 }
 
-const ROLE_LABELS: Record<DraftFileRole, string> = { response: 'Response', input: 'Input file', ignore: 'Leave out' };
+const ROLE_LABELS: Record<DraftFileRole, string> = { response: 'Response', combined: 'All responses', input: 'Input file', ignore: 'Leave out' };
 
 function FileRoles({ draft, files, onChange }: Pick<Props, 'draft' | 'files' | 'onChange'>) {
   const byId = new Map(files.map((f) => [f.id, f]));
   const rows = draft.files.filter((f) => byId.has(f.fileId));
   if (rows.length === 0) return <p className="text-sm text-fg-muted">No files attached.</p>;
 
+  const replace = (fileId: string, next: (typeof draft.files)[number]) => onChange({ ...draft, files: draft.files.map((f) => (f.fileId === fileId ? next : f)) });
   const update = (fileId: string, role: DraftFileRole, label: ResponseLabel | null) =>
-    onChange({ ...draft, files: draft.files.map((f) => (f.fileId === fileId ? { fileId, role, label: role === 'response' ? label ?? 'A' : null } : f)) });
+    replace(fileId, role === 'combined' ? { fileId, role, label: null, labels: [...RESPONSE_LABELS] } : { fileId, role, label: role === 'response' ? label ?? 'A' : null });
+  const toggleLabel = (fileId: string, labels: ResponseLabel[], label: ResponseLabel) => {
+    const next = labels.includes(label) ? labels.filter((l) => l !== label) : RESPONSE_LABELS.filter((l) => l === label || labels.includes(l));
+    replace(fileId, { fileId, role: 'combined', label: null, labels: next });
+  };
 
   return (
     <ul className="divide-y divide-border rounded-md border border-border">
@@ -50,14 +55,37 @@ function FileRoles({ draft, files, onChange }: Pick<Props, 'draft' | 'files' | '
               aria-label={`Role for ${file.name}`}
               value={row.role}
               onChange={(e) => update(row.fileId, e.target.value as DraftFileRole, row.label)}
-              className="h-9 w-36 text-sm"
+              className="h-9 w-48 text-sm"
             >
               {(Object.keys(ROLE_LABELS) as DraftFileRole[]).map((role) => (
-                <option key={role} value={role} disabled={role === 'response' && !canBeResponse}>
+                <option key={role} value={role} disabled={(role === 'response' || role === 'combined') && !canBeResponse}>
                   {ROLE_LABELS[role]}
                 </option>
               ))}
             </Select>
+            {row.role === 'combined' && (
+              <div className="basis-full pl-[68px]">
+                <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label={`Responses in ${file.name}`}>
+                  {RESPONSE_LABELS.map((label) => {
+                    const on = row.labels?.includes(label) ?? false;
+                    return (
+                      <button
+                        key={label}
+                        type="button"
+                        aria-pressed={on}
+                        onClick={() => toggleLabel(row.fileId, row.labels ?? [], label)}
+                        className={on ? 'h-7 w-8 rounded-sm bg-fg text-[13px] font-semibold text-page' : 'h-7 w-8 rounded-sm border border-border-strong text-[13px] text-fg-muted'}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="mt-1.5 text-[12px] text-fg-muted">
+                  Creates an empty placeholder for each selected response, with this file attached to each one. Upload the slide images per response after you create the task.
+                </p>
+              </div>
+            )}
             {row.role === 'response' && (
               <Select
                 aria-label={`Response for ${file.name}`}
@@ -126,7 +154,7 @@ export function DraftReview({ draft, version, files, projects, tags, creating, o
   const used = new Set(draft.files.filter((f) => f.role !== 'ignore').map((f) => f.fileId));
   const notReady = files.filter((f) => used.has(f.id) && f.status !== 'ready');
   const inputs = draft.files.filter((f) => f.role === 'input').length;
-  const responses = new Set(draft.files.filter((f) => f.role === 'response').map((f) => f.label)).size;
+  const responses = responseLabelsIn(draft.files).length;
   const blocker = !draft.title.trim() ? 'Add a title' : notReady.length ? 'Wait for files to finish reading' : null;
 
   return (

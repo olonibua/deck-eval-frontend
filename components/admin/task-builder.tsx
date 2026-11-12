@@ -20,7 +20,7 @@ import { RubricRenderer } from '../workspace/rubric-renderer';
 import { BasicsForm, basicsFromTask } from './basics-form';
 import { Dropzone } from './dropzone';
 import { RichTextEditor } from './rich-text-editor';
-import { SlideManager } from './slide-manager';
+import { SlideBoard, SlideGrid } from './slide-board';
 
 const STEPS = ['Basics', 'Brief', 'Input files', 'Responses', 'Rubric & assignment'];
 const IMAGE_ACCEPT = 'image/png,image/jpeg,image/webp';
@@ -181,84 +181,91 @@ export function TaskBuilder({
           </div>
         )}
         {step === 4 && (
-          <div className="space-y-8">
-            {task.responses.map((response) => (
-              <section key={response.id} className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h2 className="flex items-center gap-2 text-section font-medium">
-                    <ResponseChip label={response.label} /> Response {response.label}
-                    <span className="text-meta font-normal text-fg-muted">{response.slides.length} slides</span>
-                  </h2>
+          <SlideBoard task={task} onTask={setTask}>
+            <div className="space-y-8">
+              {task.responses.length > 1 && (
+                <p className="text-sm text-fg-muted">
+                  Drag a slide by its handle to reorder it or move it to another response. To move many at once, tick their boxes (shift-click selects a range) and choose Move to.
+                </p>
+              )}
+              {task.responses.map((response) => (
+                <section key={response.id} className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h2 className="flex items-center gap-2 text-section font-medium">
+                      <ResponseChip label={response.label} /> Response {response.label}
+                      <span className="text-meta font-normal text-fg-muted">{response.slides.length} slides</span>
+                    </h2>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={task.submissionCount > 0}
+                      onClick={async () => {
+                        const ok = await confirm({
+                          title: `Remove Response ${response.label}?`,
+                          description: 'Its slides and files are deleted, and the responses after it are relabelled.',
+                          confirmLabel: 'Remove response',
+                          destructive: true,
+                        });
+                        if (!ok) return;
+                        const updated = await attempt(() => api.delete<TaskDetailDTO>(`${base}/responses/${response.id}`));
+                        if (updated) setTask(updated);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" aria-hidden /> Remove
+                    </Button>
+                  </div>
+                  <Dropzone<TaskDetailDTO>
+                    url={`${base}/responses/${response.id}/slides`}
+                    accept={IMAGE_ACCEPT}
+                    label={`Drop slide images for Response ${response.label}`}
+                    hint="PNG, JPG or WebP · sorted by filename number (slide2 before slide10)"
+                    onUploaded={setTask}
+                    compact={response.slides.length > 0}
+                  />
+                  <SlideGrid response={response} />
+                  <div className="flex flex-wrap items-center gap-2">
+                    {response.files.map((file) => (
+                      <FileChip
+                        key={file.id}
+                        file={file}
+                        onRemove={async () => {
+                          const updated = await attempt(() => api.delete<TaskDetailDTO>(`${base}/response-files/${file.id}`));
+                          if (updated) setTask(updated);
+                        }}
+                      />
+                    ))}
+                  </div>
+                  <details className="text-sm">
+                    <summary className="cursor-pointer text-fg-muted hover:text-fg">Attach a downloadable file (.pptx or .pdf)</summary>
+                    <div className="mt-2">
+                      <Dropzone<TaskDetailDTO>
+                        url={`${base}/responses/${response.id}/files`}
+                        accept=".pptx,.pdf"
+                        label="Drop a .pptx or .pdf"
+                        hint="Raters can download it from the response tab"
+                        onUploaded={setTask}
+                        compact
+                      />
+                    </div>
+                  </details>
+                </section>
+              ))}
+              <div className="flex gap-2">
+                {task.responses.length < 4 && (
                   <Button
-                    variant="ghost"
-                    size="sm"
-                    disabled={task.submissionCount > 0}
+                    variant="secondary"
                     onClick={async () => {
-                      const ok = await confirm({
-                        title: `Remove Response ${response.label}?`,
-                        description: 'Its slides and files are deleted, and the responses after it are relabelled.',
-                        confirmLabel: 'Remove response',
-                        destructive: true,
-                      });
-                      if (!ok) return;
-                      const updated = await attempt(() => api.delete<TaskDetailDTO>(`${base}/responses/${response.id}`));
+                      const updated = await attempt(() => api.post<TaskDetailDTO>(`${base}/responses`));
                       if (updated) setTask(updated);
                     }}
                   >
-                    <Trash2 className="h-4 w-4" aria-hidden /> Remove
+                    <Plus className="h-4 w-4" aria-hidden /> Add response
                   </Button>
-                </div>
-                <Dropzone<TaskDetailDTO>
-                  url={`${base}/responses/${response.id}/slides`}
-                  accept={IMAGE_ACCEPT}
-                  label={`Drop slide images for Response ${response.label}`}
-                  hint="PNG, JPG or WebP · sorted by filename number (slide2 before slide10)"
-                  onUploaded={setTask}
-                  compact={response.slides.length > 0}
-                />
-                <SlideManager taskId={task.id} response={response} onTask={setTask} />
-                <div className="flex flex-wrap items-center gap-2">
-                  {response.files.map((file) => (
-                    <FileChip
-                      key={file.id}
-                      file={file}
-                      onRemove={async () => {
-                        const updated = await attempt(() => api.delete<TaskDetailDTO>(`${base}/response-files/${file.id}`));
-                        if (updated) setTask(updated);
-                      }}
-                    />
-                  ))}
-                </div>
-                <details className="text-sm">
-                  <summary className="cursor-pointer text-fg-muted hover:text-fg">Attach a downloadable file (.pptx or .pdf)</summary>
-                  <div className="mt-2">
-                    <Dropzone<TaskDetailDTO>
-                      url={`${base}/responses/${response.id}/files`}
-                      accept=".pptx,.pdf"
-                      label="Drop a .pptx or .pdf"
-                      hint="Raters can download it from the response tab"
-                      onUploaded={setTask}
-                      compact
-                    />
-                  </div>
-                </details>
-              </section>
-            ))}
-            <div className="flex gap-2">
-              {task.responses.length < 4 && (
-                <Button
-                  variant="secondary"
-                  onClick={async () => {
-                    const updated = await attempt(() => api.post<TaskDetailDTO>(`${base}/responses`));
-                    if (updated) setTask(updated);
-                  }}
-                >
-                  <Plus className="h-4 w-4" aria-hidden /> Add response
-                </Button>
-              )}
-              <Button onClick={() => goTo(5)}>Continue</Button>
+                )}
+                <Button onClick={() => goTo(5)}>Continue</Button>
+              </div>
             </div>
-          </div>
+          </SlideBoard>
         )}
         {step === 5 && <AssignmentStep task={task} raters={raters} fields={fields} onSaved={setTask} />}
       </Card>

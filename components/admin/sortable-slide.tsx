@@ -1,27 +1,44 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { closestCenter, DndContext, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
-import { arrayMove, rectSortingStrategy, SortableContext, sortableKeyboardCoordinates, useSortable } from '@dnd-kit/sortable';
+import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, RefreshCw, Trash2 } from 'lucide-react';
+import { Check, GripVertical, RefreshCw, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import type { ResponseDTO, SlideDTO, TaskDetailDTO } from '@/lib/shared';
+import type { SlideDTO, TaskDetailDTO } from '@/lib/shared';
 import { api } from '@/lib/client-api';
 import { ApiError } from '@/lib/errors';
 import { cn } from '@/lib/cn';
 import { useConfirm } from '../ui/dialog-provider';
 
-function SortableSlide({
+export function SlideTile({ slide, label, overlay = false }: { slide: SlideDTO; label: string; overlay?: boolean }) {
+  return (
+    <div className={cn('rounded-md border border-border bg-surface p-1.5', overlay && 'w-48 rotate-2 shadow-pop')}>
+      <div className="aspect-video overflow-hidden rounded-sm bg-subtle">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={slide.url} alt="" className="h-full w-full object-contain" />
+      </div>
+      <p className="mt-1.5 px-0.5 text-meta font-semibold">{label}</p>
+    </div>
+  );
+}
+
+export function SortableSlide({
   slide,
   index,
   taskId,
   onTask,
+  selected,
+  selecting,
+  onSelect,
 }: {
   slide: SlideDTO;
   index: number;
   taskId: string;
   onTask: (task: TaskDetailDTO) => void;
+  selected: boolean;
+  selecting: boolean;
+  onSelect: (range: boolean) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: slide.id });
   const confirm = useConfirm();
@@ -48,19 +65,39 @@ function SortableSlide({
     <li
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={cn('group rounded-md border border-border bg-surface p-1.5', isDragging && 'z-10 shadow-pop')}
+      className={cn('group rounded-md border bg-surface p-1.5', selected ? 'border-fg ring-2 ring-fg' : 'border-border', isDragging && 'opacity-40')}
     >
       <div className="relative aspect-video overflow-hidden rounded-sm bg-subtle">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={slide.url} alt={`Slide ${index + 1}`} className="h-full w-full object-contain" loading="lazy" />
+        <img
+          src={slide.url}
+          alt={`Slide ${index + 1}`}
+          className={cn('h-full w-full object-contain', selecting && 'cursor-pointer')}
+          loading="lazy"
+          onClick={(e) => selecting && onSelect(e.shiftKey)}
+        />
         <button
           type="button"
           className="absolute top-1 left-1 inline-flex h-7 w-7 cursor-grab items-center justify-center rounded-sm bg-surface/90 text-fg-muted shadow-card active:cursor-grabbing"
-          aria-label={`Drag slide ${index + 1} to reorder`}
+          aria-label={`Drag slide ${index + 1} to reorder or move to another response`}
           {...attributes}
           {...listeners}
         >
           <GripVertical className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          role="checkbox"
+          aria-checked={selected}
+          aria-label={`Select slide ${index + 1}`}
+          onClick={(e) => onSelect(e.shiftKey)}
+          className={cn(
+            'absolute bottom-1 left-1 inline-flex h-6 w-6 items-center justify-center rounded-sm border-[1.5px] shadow-card transition-opacity',
+            selected ? 'border-fg bg-fg text-page' : 'border-border-strong bg-surface/90 text-transparent',
+            selected || selecting ? 'opacity-100' : 'opacity-0 group-focus-within:opacity-100 group-hover:opacity-100',
+          )}
+        >
+          <Check className="h-3.5 w-3.5" />
         </button>
         <div className="absolute top-1 right-1 flex gap-1 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
           <button
@@ -114,38 +151,5 @@ function SortableSlide({
         />
       </div>
     </li>
-  );
-}
-
-export function SlideManager({ taskId, response, onTask }: { taskId: string; response: ResponseDTO; onTask: (task: TaskDetailDTO) => void }) {
-  const [slides, setSlides] = useState(response.slides);
-  useEffect(() => setSlides(response.slides), [response.slides]);
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
-
-  async function onDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-    const next = arrayMove(slides, slides.findIndex((s) => s.id === active.id), slides.findIndex((s) => s.id === over.id));
-    setSlides(next);
-    try {
-      onTask(await api.put<TaskDetailDTO>(`/admin/tasks/${taskId}/responses/${response.id}/slides/order`, { slideIds: next.map((s) => s.id) }));
-    } catch (err) {
-      setSlides(response.slides);
-      toast.error(err instanceof ApiError ? err.message : 'Could not reorder');
-    }
-  }
-
-  if (slides.length === 0) return null;
-
-  return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-      <SortableContext items={slides.map((s) => s.id)} strategy={rectSortingStrategy}>
-        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-          {slides.map((slide, index) => (
-            <SortableSlide key={slide.id} slide={slide} index={index} taskId={taskId} onTask={onTask} />
-          ))}
-        </ul>
-      </SortableContext>
-    </DndContext>
   );
 }
