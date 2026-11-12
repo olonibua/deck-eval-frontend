@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Clock, Flag, Info, Undo2 } from 'lucide-react';
+import { ArrowLeft, Clock, Flag, Info, Lightbulb, Sparkles, Undo2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   answerKey,
@@ -37,12 +37,16 @@ import { SaveIndicator } from './save-indicator';
 import { SegmentedTabs, type TabItem } from './segmented-tabs';
 import { SlideCard } from './slide-card';
 import { SlideLightbox } from './slide-lightbox';
+import { HumaniseAllMenu, HumaniseTools } from './humanise-tools';
+import { useHumanise } from './use-humanise';
+import { useQc } from './use-qc';
+import { useConfirm } from '../ui/dialog-provider';
 
 export type WorkspaceMode = 'rate' | 'review' | 'preview';
 
 const RANKING_TAB = 'ranking';
 
-export function Workspace({ data, mode, backHref }: { data: WorkspaceDTO; mode: WorkspaceMode; backHref: string }) {
+export function Workspace({ data, mode, backHref, canQc = false }: { data: WorkspaceDTO; mode: WorkspaceMode; backHref: string; canQc?: boolean }) {
   const router = useRouter();
   const { task, fields, submission } = data;
   const responses = task.responses;
@@ -62,6 +66,21 @@ export function Workspace({ data, mode, backHref }: { data: WorkspaceDTO; mode: 
   const [comments, setComments] = useState<ReviewCommentDTO[]>(submission?.comments ?? []);
 
   const autosave = useAutosave(submission?.id ?? null, editable);
+  const confirm = useConfirm();
+  function applyAnswers(changes: AnswerMap) {
+    setAnswers((current) => ({ ...current, ...changes }));
+    setIssues((current) => current.filter((i) => !(answerKey(i.fieldId, i.responseId) in changes)));
+    for (const field of fields) {
+      const scopes = field.scope === 'PER_TASK' ? [null] : responses.map((r) => r.id);
+      for (const responseId of scopes) {
+        const key = answerKey(field.id, responseId);
+        if (key in changes) autosave.queue(field.id, responseId, changes[key]);
+      }
+    }
+  }
+  const qc = useQc(submission?.id ?? null, applyAnswers);
+  const humanise = useHumanise({ fields, responses, answers, applyAnswers });
+  const aiTools = editable && canQc;
   const seconds = useActiveTimer(submission?.id ?? null, editable, submission?.activeSeconds ?? 0);
   const independenceCheck = useMemo(() => needsIndependenceCheck(task.instructions), [task.instructions]);
   const hasTaskFields = fields.some((f) => f.scope === 'PER_TASK' && f.type !== 'SECTION');
@@ -103,6 +122,19 @@ export function Workspace({ data, mode, backHref }: { data: WorkspaceDTO; mode: 
       visible?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       visible?.querySelector<HTMLElement>('textarea, [role="radio"][tabindex="0"], select, input')?.focus({ preventScroll: true });
     }, 120);
+  }
+
+  async function runQc() {
+    const hasAnswers = Object.values(answers).some((v) => v !== null && v !== '' && !(typeof v === 'object' && Object.keys(v).length === 0));
+    if (hasAnswers) {
+      const ok = await confirm({
+        title: 'Replace your answers with QC?',
+        description: 'QC rates every response and fills in every score and explanation. Anything you have already written will be replaced.',
+        confirmLabel: 'Run QC',
+      });
+      if (!ok) return;
+    }
+    await qc.run();
   }
 
   async function submit() {
@@ -204,6 +236,21 @@ export function Workspace({ data, mode, backHref }: { data: WorkspaceDTO; mode: 
       commentHandlers={commentHandlers}
       invalidKeys={invalidKeys}
       independenceCheck={independenceCheck}
+      textFooter={
+        aiTools
+          ? (field, responseId) => {
+              const key = answerKey(field.id, responseId);
+              return (
+                <HumaniseTools
+                  busyMode={humanise.busy[key]}
+                  info={humanise.info[key]}
+                  disabled={qc.running}
+                  onRun={(mode) => void humanise.runField(field, responseId, mode)}
+                />
+              );
+            }
+          : undefined
+      }
     />
   );
 
@@ -238,6 +285,13 @@ export function Workspace({ data, mode, backHref }: { data: WorkspaceDTO; mode: 
             )}
             {mode === 'rate' && submission && (
               <>
+                {aiTools && (
+                  <Button variant="yellow" size="sm" onClick={runQc} loading={qc.running} disabled={humanise.anyBusy} title="Rate every response with AI using the QC rules">
+                    {!qc.running && <Sparkles className="h-4 w-4" aria-hidden />}
+                    {qc.running ? 'Running QC…' : 'QC'}
+                  </Button>
+                )}
+                {aiTools && <HumaniseAllMenu busy={humanise.anyBusy} disabled={qc.running} onRun={humanise.runAll} />}
                 {editable && <SaveIndicator state={autosave.state} />}
                 <span className="hidden items-center gap-1 text-meta text-fg-muted tabular-nums sm:inline-flex" aria-label="Active time">
                   <Clock className="h-3.5 w-3.5" aria-hidden /> {formatDuration(seconds)}
@@ -279,6 +333,25 @@ export function Workspace({ data, mode, backHref }: { data: WorkspaceDTO; mode: 
           <div className="flex items-center gap-2 rounded-lg bg-pink px-4 py-3 text-sm text-cocoa">
             <Undo2 className="h-4 w-4 shrink-0" aria-hidden />
             A reviewer sent this back. Their comments sit next to each field. Make your changes, then resubmit.
+          </div>
+        )}
+
+        {qc.running && (
+          <div className="flex items-center gap-2 rounded-lg bg-yellow/50 px-4 py-3 text-sm text-cocoa" role="status">
+            <Sparkles className="h-4 w-4 shrink-0 animate-pulse" aria-hidden />
+            QC is reading the brief, the input files and every slide. This usually takes one to three minutes. You can keep looking at the slides.
+          </div>
+        )}
+        {qc.notes && (
+          <div className="flex items-start gap-2 rounded-lg bg-yellow/50 px-4 py-3 text-sm text-cocoa">
+            <Lightbulb className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+            <p className="flex-1 whitespace-pre-wrap">
+              <span className="font-medium">Check before submitting: </span>
+              {qc.notes}
+            </p>
+            <button type="button" onClick={qc.dismissNotes} aria-label="Dismiss" className="rounded-sm p-0.5 hover:bg-cocoa/10">
+              <X className="h-4 w-4" />
+            </button>
           </div>
         )}
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment } from 'react';
+import { Fragment, type ReactNode } from 'react';
 import {
   answerKey,
   type AnswerMap,
@@ -34,6 +34,7 @@ export interface RubricRendererProps {
   commentHandlers?: CommentHandlers;
   invalidKeys?: Set<string>;
   independenceCheck?: boolean;
+  textFooter?: (field: RubricFieldDef, responseId: string | null) => ReactNode;
 }
 
 export function fieldDomId(fieldId: string, responseId: string | null) {
@@ -67,6 +68,7 @@ export function RubricRenderer({
   commentHandlers,
   invalidKeys,
   independenceCheck,
+  textFooter,
 }: RubricRendererProps) {
   const scope = responseId ? 'PER_RESPONSE' : 'PER_TASK';
   const scoped = fields.filter((f) => f.scope === scope).sort((a, b) => a.order - b.order);
@@ -110,16 +112,19 @@ export function RubricRenderer({
         );
       case 'TEXTAREA':
         return (
-          <RationaleField
-            id={id}
-            label={labelled}
-            config={field.config}
-            value={typeof value === 'string' ? value : ''}
-            onChange={change}
-            readOnly={readOnly}
-            invalid={invalid(field)}
-            independenceCheck={independenceCheck && scope === 'PER_RESPONSE'}
-          />
+          <>
+            <RationaleField
+              id={id}
+              label={labelled}
+              config={field.config}
+              value={typeof value === 'string' ? value : ''}
+              onChange={change}
+              readOnly={readOnly}
+              invalid={invalid(field)}
+              independenceCheck={independenceCheck && scope === 'PER_RESPONSE'}
+            />
+            {textFooter?.(field, responseId)}
+          </>
         );
       case 'RANKING':
         return (

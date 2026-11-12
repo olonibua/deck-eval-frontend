@@ -19,6 +19,7 @@ function sectionsFor(user: SessionUser): NavSection[] {
         { href: '/admin', label: 'Overview', dot: 'bg-magenta' },
         { href: '/admin/tasks', label: 'Tasks', dot: 'bg-teal' },
         { href: '/admin/templates', label: 'Rubrics', dot: 'bg-pink' },
+        { href: '/admin/qc', label: 'AI rules', dot: 'bg-yellow' },
         { href: '/admin/users', label: 'Users', dot: 'bg-sky' },
         { href: '/admin/tags', label: 'Tags', dot: 'bg-lime' },
         { href: '/admin/exports', label: 'Export', dot: 'bg-orange' },
