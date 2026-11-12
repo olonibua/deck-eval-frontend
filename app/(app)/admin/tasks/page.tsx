@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ClipboardList, Plus, Sparkles } from 'lucide-react';
 import type { ProjectDTO, TagDTO, TaskSummaryDTO } from '@/lib/shared';
+import { TaskRowMenu } from '@/components/admin/task-row-menu';
 import { FilterBar } from '@/components/filter-bar';
 import { PriorityBadge, StatusBadge, TagChip } from '@/components/ui/badges';
 import { Card, PageHeader, tableHead } from '@/components/ui/card';
@@ -66,6 +67,9 @@ export default async function AdminTasksPage({ searchParams }: { searchParams: P
                 <th className="hidden sm:table-cell px-4 py-3 font-semibold">Raters</th>
                 <th className="hidden md:table-cell px-4 py-3 font-semibold">Due</th>
                 <th className="hidden md:table-cell px-4 py-3 font-semibold">Updated</th>
+                <th className="w-12 px-2 py-3">
+                  <span className="sr-only">Actions</span>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -94,6 +98,9 @@ export default async function AdminTasksPage({ searchParams }: { searchParams: P
                   </td>
                   <td className="hidden md:table-cell px-4 py-3 text-fg-muted">{formatDate(task.dueAt)}</td>
                   <td className="hidden md:table-cell px-4 py-3 text-fg-muted">{formatDate(task.updatedAt)}</td>
+                  <td className="px-2 py-3 text-right">
+                    <TaskRowMenu task={task} />
+                  </td>
                 </tr>
               ))}
             </tbody>

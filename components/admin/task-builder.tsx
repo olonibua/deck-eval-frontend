@@ -12,7 +12,6 @@ import { cn } from '@/lib/cn';
 import { Button } from '../ui/button';
 import { PriorityBadge, ResponseChip, StatusBadge } from '../ui/badges';
 import { Card } from '../ui/card';
-import { ConfirmDialog } from '../ui/confirm';
 import { useConfirm } from '../ui/dialog-provider';
 import { FileChip } from '../ui/file-chip';
 import { Input, Label } from '../ui/form';
@@ -21,6 +20,7 @@ import { BasicsForm, basicsFromTask } from './basics-form';
 import { Dropzone } from './dropzone';
 import { RichTextEditor } from './rich-text-editor';
 import { SlideBoard, SlideGrid } from './slide-board';
+import { useDeleteTask } from './use-delete-task';
 
 const STEPS = ['Basics', 'Brief', 'Input files', 'Responses', 'Rubric & assignment'];
 const IMAGE_ACCEPT = 'image/png,image/jpeg,image/webp';
@@ -56,7 +56,7 @@ export function TaskBuilder({
   const params = useSearchParams();
   const step = Math.min(STEPS.length, Math.max(1, Number(params.get('step') ?? 1)));
   const [task, setTask] = useState(initialTask);
-  const [deleteOpen, setDeleteOpen] = useState(false);
+  const deleteTask = useDeleteTask();
   const base = `/admin/tasks/${task.id}`;
 
   const goTo = (n: number) => router.replace(`${pathname}?step=${n}`, { scroll: false });
@@ -91,11 +91,9 @@ export function TaskBuilder({
           <Button variant="secondary" onClick={duplicate}>
             <Copy className="h-4 w-4" aria-hidden /> Duplicate
           </Button>
-          {task.status === 'DRAFT' && task.submissionCount === 0 && (
-            <Button variant="ghost" onClick={() => setDeleteOpen(true)} aria-label="Delete task">
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          )}
+          <Button variant="ghost" onClick={() => void deleteTask(task)} aria-label="Delete task" title="Delete task">
+            <Trash2 className="h-4 w-4" />
+          </Button>
           {task.status !== 'ARCHIVED' && task.status !== 'DRAFT' && (
             <Button variant="ghost" onClick={() => setStatus('ARCHIVED')}>
               <Archive className="h-4 w-4" aria-hidden /> Archive
@@ -270,19 +268,6 @@ export function TaskBuilder({
         {step === 5 && <AssignmentStep task={task} raters={raters} fields={fields} onSaved={setTask} />}
       </Card>
 
-      <ConfirmDialog
-        open={deleteOpen}
-        onOpenChange={setDeleteOpen}
-        title="Delete this task?"
-        description="The task, its responses and uploaded files will be removed. This can't be undone."
-        confirmLabel="Delete task"
-        destructive
-        onConfirm={async () => {
-          await api.delete(base);
-          router.push('/admin/tasks');
-          router.refresh();
-        }}
-      />
     </div>
   );
 }
