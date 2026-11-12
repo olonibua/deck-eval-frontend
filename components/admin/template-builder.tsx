@@ -284,7 +284,7 @@ export function TemplateBuilder({ template }: { template: TemplateDTO | null }) 
       <div>
         <Card className="sticky top-20 p-5">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-section font-semibold">Live preview</h2>
+            <h2 className="text-section font-medium">Live preview</h2>
             <div className="flex gap-1">
               {SAMPLE_RESPONSES.map((r) => (
                 <Button key={r.id} size="sm" variant={preview === r.id ? 'primary' : 'secondary'} onClick={() => setPreview(r.id)}>

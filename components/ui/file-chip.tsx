@@ -13,7 +13,7 @@ function iconFor(mime: string) {
 export function FileChip({ file, onRemove }: { file: FileDTO; onRemove?: () => void }) {
   const Icon = iconFor(file.mime);
   return (
-    <div className="inline-flex max-w-full items-center gap-2 rounded-md border border-border bg-surface py-1.5 pr-1.5 pl-2.5">
+    <div className="inline-flex max-w-full items-center gap-2 rounded-sm border border-border bg-surface py-1.5 pr-1.5 pl-2.5">
       <Icon className="h-4 w-4 shrink-0 text-fg-muted" aria-hidden />
       <span className="truncate text-sm font-medium">{file.name}</span>
       <span className="shrink-0 text-meta text-fg-subtle">{formatBytes(file.size)}</span>
@@ -29,7 +29,7 @@ export function FileChip({ file, onRemove }: { file: FileDTO; onRemove?: () => v
         <button
           type="button"
           onClick={onRemove}
-          className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-sm text-fg-muted hover:bg-danger-soft hover:text-danger"
+          className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-sm text-fg-muted hover:bg-pink hover:text-cocoa"
           aria-label={`Remove ${file.name}`}
         >
           <X className="h-4 w-4" />

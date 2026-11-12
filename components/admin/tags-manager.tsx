@@ -10,17 +10,18 @@ import { ApiError } from '@/lib/errors';
 import { cn } from '@/lib/cn';
 import { Button } from '../ui/button';
 import { Card } from '../ui/card';
+import { useConfirm } from '../ui/dialog-provider';
 import { Input } from '../ui/form';
 
 export const TAG_PALETTE = [
-  { name: 'Green', value: '#2F6B4F' },
-  { name: 'Navy', value: '#2B4C7E' },
-  { name: 'Rust', value: '#8A4B2C' },
-  { name: 'Plum', value: '#6B4C8A' },
-  { name: 'Blue', value: '#2563EB' },
-  { name: 'Amber', value: '#B45309' },
-  { name: 'Red', value: '#B91C1C' },
-  { name: 'Emerald', value: '#15803D' },
+  { name: 'Blue', value: '#4176C5' },
+  { name: 'Sky', value: '#8DD0FB' },
+  { name: 'Teal', value: '#8FD1DC' },
+  { name: 'Pink', value: '#F3B2AF' },
+  { name: 'Magenta', value: '#C4597C' },
+  { name: 'Lime', value: '#DCE88C' },
+  { name: 'Yellow', value: '#F8E87D' },
+  { name: 'Orange', value: '#EC905D' },
 ];
 
 function Swatches({ value, onChange, label }: { value: string; onChange: (color: string) => void; label: string }) {
@@ -34,7 +35,7 @@ function Swatches({ value, onChange, label }: { value: string; onChange: (color:
           aria-checked={value.toLowerCase() === c.value.toLowerCase()}
           aria-label={c.name}
           onClick={() => onChange(c.value)}
-          className={cn('h-6 w-6 rounded-full border-2', value.toLowerCase() === c.value.toLowerCase() ? 'border-fg' : 'border-transparent')}
+          className={cn('h-6 w-6 rounded-full border-2 ring-1 ring-border-strong/60', value.toLowerCase() === c.value.toLowerCase() ? 'border-fg' : 'border-surface')}
           style={{ background: c.value }}
         />
       ))}
@@ -44,6 +45,7 @@ function Swatches({ value, onChange, label }: { value: string; onChange: (color:
 
 export function TagsManager({ tags }: { tags: TagDTO[] }) {
   const router = useRouter();
+  const confirm = useConfirm();
   const [name, setName] = useState('');
   const [color, setColor] = useState(TAG_PALETTE[0].value);
 
@@ -70,7 +72,15 @@ export function TagsManager({ tags }: { tags: TagDTO[] }) {
             variant="ghost"
             size="icon"
             aria-label={`Delete ${tag.name}`}
-            onClick={() => window.confirm(`Delete the tag "${tag.name}"? It will be removed from every task.`) && run(() => api.delete(`/tags/${tag.id}`), 'Tag deleted')}
+            onClick={async () => {
+              const ok = await confirm({
+                title: `Delete the "${tag.name}" tag?`,
+                description: 'It will be removed from every task that uses it.',
+                confirmLabel: 'Delete tag',
+                destructive: true,
+              });
+              if (ok) void run(() => api.delete(`/tags/${tag.id}`), 'Tag deleted');
+            }}
           >
             <Trash2 className="h-4 w-4" />
           </Button>

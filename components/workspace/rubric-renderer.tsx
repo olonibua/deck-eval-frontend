@@ -167,7 +167,7 @@ export function RubricRenderer({
       {blocks.map(({ primary, explanation }) => {
         if (primary.type === 'SECTION') {
           return (
-            <h2 key={primary.id} className="border-b border-border pb-2 text-section font-semibold">
+            <h2 key={primary.id} className="border-b border-border pb-2 text-section font-medium">
               {primary.label}
             </h2>
           );

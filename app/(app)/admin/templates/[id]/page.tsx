@@ -8,7 +8,7 @@ export default async function TemplatePage({ params }: { params: Promise<{ id: s
   const template = await serverApi<TemplateDTO>(`/admin/templates/${id}`);
   return (
     <div>
-      <PageHeader title={template.name} meta={`Version ${template.version} · ${template.submissionCount} ${template.submissionCount === 1 ? 'submission' : 'submissions'}`} />
+      <PageHeader eyebrow="Rubrics" title={template.name} meta={`Version ${template.version} · ${template.submissionCount} ${template.submissionCount === 1 ? 'submission' : 'submissions'}`} />
       <TemplateBuilder key={template.id} template={template} />
     </div>
   );

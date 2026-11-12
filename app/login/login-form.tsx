@@ -2,11 +2,10 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Layers, MailCheck } from 'lucide-react';
+import { MailCheck } from 'lucide-react';
 import { api } from '@/lib/client-api';
 import { ApiError } from '@/lib/errors';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { FieldError, Input, Label } from '@/components/ui/form';
 
 export function LoginForm({ linkExpired, next }: { linkExpired: boolean; next?: string }) {
@@ -37,14 +36,10 @@ export function LoginForm({ linkExpired, next }: { linkExpired: boolean; next?: 
   }
 
   return (
-    <Card className="w-full max-w-sm p-8">
-      <div className="mb-6 flex items-center gap-2 text-lg font-semibold">
-        <Layers className="h-5 w-5 text-primary" aria-hidden />
-        Deck Eval
-      </div>
+    <div>
       {linkSent ? (
         <div className="space-y-3 text-center">
-          <MailCheck className="mx-auto h-8 w-8 text-primary" aria-hidden />
+          <MailCheck className="mx-auto h-8 w-8 text-fg" aria-hidden />
           <p className="font-medium">Check your inbox</p>
           <p className="text-sm text-fg-muted">If {email} has an account, a sign-in link is on its way. It expires in 15 minutes.</p>
           <Button variant="ghost" size="sm" onClick={() => setLinkSent(false)}>
@@ -53,7 +48,8 @@ export function LoginForm({ linkExpired, next }: { linkExpired: boolean; next?: 
         </div>
       ) : (
         <form onSubmit={submit} className="space-y-4" noValidate>
-          <h1 className="text-title font-semibold">Sign in</h1>
+          <h1 className="text-title font-medium">Sign in</h1>
+          <p className="text-[15px] text-fg-muted">Pick up your next deck where you left off.</p>
           <div>
             <Label htmlFor="email">Email</Label>
             <Input id="email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
@@ -87,12 +83,12 @@ export function LoginForm({ linkExpired, next }: { linkExpired: boolean; next?: 
           </button>
           <p className="text-center text-sm text-fg-muted">
             New here?{' '}
-            <Link href="/signup" className="font-medium text-primary hover:underline">
+            <Link href="/signup" className="font-medium text-fg underline decoration-orange decoration-2 underline-offset-4 hover:decoration-fg">
               Create an account
             </Link>
           </p>
         </form>
       )}
-    </Card>
+    </div>
   );
 }

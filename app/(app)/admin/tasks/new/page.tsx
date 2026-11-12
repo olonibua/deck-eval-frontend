@@ -7,7 +7,7 @@ export default async function NewTaskPage() {
   const [projects, tags] = await Promise.all([serverApi<ProjectDTO[]>('/projects'), serverApi<TagDTO[]>('/tags')]);
   return (
     <div>
-      <PageHeader title="New task" meta="Step 1 of 5 · Basics" />
+      <PageHeader eyebrow="Step 1 of 5 · Basics" title="New task" />
       <NewTaskForm projects={projects} tags={tags} />
     </div>
   );

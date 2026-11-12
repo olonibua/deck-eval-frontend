@@ -3,7 +3,7 @@ import { ClipboardList, Plus } from 'lucide-react';
 import type { ProjectDTO, TagDTO, TaskSummaryDTO } from '@/lib/shared';
 import { FilterBar } from '@/components/filter-bar';
 import { PriorityBadge, StatusBadge, TagChip } from '@/components/ui/badges';
-import { Card, PageHeader } from '@/components/ui/card';
+import { Card, PageHeader, tableHead } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { formatDate } from '@/lib/format';
 import { serverApi } from '@/lib/server-api';
@@ -20,10 +20,11 @@ export default async function AdminTasksPage({ searchParams }: { searchParams: P
   return (
     <div>
       <PageHeader
+        eyebrow="Admin"
         title="Tasks"
         meta={`${tasks.length} tasks`}
         actions={
-          <Link href="/admin/tasks/new" className="inline-flex h-9 items-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-on-primary hover:bg-primary-hover">
+          <Link href="/admin/tasks/new" className="inline-flex h-10 items-center gap-2 rounded-sm bg-yellow px-4 text-sm font-medium text-cocoa transition hover:-translate-y-px">
             <Plus className="h-4 w-4" aria-hidden /> New task
           </Link>
         }
@@ -35,6 +36,7 @@ export default async function AdminTasksPage({ searchParams }: { searchParams: P
             name: 'status',
             label: 'Status',
             options: ['DRAFT', 'PUBLISHED', 'IN_PROGRESS', 'COMPLETED', 'ARCHIVED'].map((s) => ({ value: s, label: s.replace('_', ' ').toLowerCase() })),
+            allLabel: 'All statuses',
           },
           { name: 'projectId', label: 'Project', options: projects.map((p) => ({ value: p.id, label: p.name })) },
           { name: 'tagId', label: 'Tag', options: tags.map((t) => ({ value: t.id, label: t.name })) },
@@ -46,13 +48,13 @@ export default async function AdminTasksPage({ searchParams }: { searchParams: P
       ) : (
         <Card className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="border-b border-border text-left text-meta text-fg-muted">
+            <thead className={tableHead}>
               <tr>
-                <th className="px-4 py-3 font-medium">Task</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium">Raters</th>
-                <th className="px-4 py-3 font-medium">Due</th>
-                <th className="px-4 py-3 font-medium">Updated</th>
+                <th className="px-4 py-3 font-semibold">Task</th>
+                <th className="px-4 py-3 font-semibold">Status</th>
+                <th className="px-4 py-3 font-semibold">Raters</th>
+                <th className="px-4 py-3 font-semibold">Due</th>
+                <th className="px-4 py-3 font-semibold">Updated</th>
               </tr>
             </thead>
             <tbody>

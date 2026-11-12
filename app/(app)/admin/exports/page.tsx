@@ -7,7 +7,7 @@ export default async function ExportsPage() {
   const projects = await serverApi<ProjectDTO[]>('/projects');
   return (
     <div>
-      <PageHeader title="Export results" meta="CSV has one row per submission per response. JSON has the full nested structure, including reviews." />
+      <PageHeader eyebrow="Admin" title="Export results" meta="CSV has one row per submission per response. JSON has the full nested structure, including reviews." />
       <ExportForm projects={projects} />
     </div>
   );

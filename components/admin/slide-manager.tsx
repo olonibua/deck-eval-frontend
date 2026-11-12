@@ -10,6 +10,7 @@ import type { ResponseDTO, SlideDTO, TaskDetailDTO } from '@/lib/shared';
 import { api } from '@/lib/client-api';
 import { ApiError } from '@/lib/errors';
 import { cn } from '@/lib/cn';
+import { useConfirm } from '../ui/dialog-provider';
 
 function SortableSlide({
   slide,
@@ -23,6 +24,7 @@ function SortableSlide({
   onTask: (task: TaskDetailDTO) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: slide.id });
+  const confirm = useConfirm();
   const [caption, setCaption] = useState(slide.caption ?? '');
   const replaceInput = useRef<HTMLInputElement>(null);
 
@@ -73,8 +75,14 @@ function SortableSlide({
             type="button"
             className="inline-flex h-7 w-7 items-center justify-center rounded-sm bg-surface/90 text-fg-muted shadow-card hover:text-danger"
             aria-label={`Delete slide ${index + 1}`}
-            onClick={() => {
-              if (window.confirm(`Delete slide ${index + 1}?`)) void run(() => api.delete<TaskDetailDTO>(`/admin/tasks/${taskId}/slides/${slide.id}`));
+            onClick={async () => {
+              const ok = await confirm({
+                title: `Delete slide ${index + 1}?`,
+                description: 'The image is removed and the slides after it move up.',
+                confirmLabel: 'Delete slide',
+                destructive: true,
+              });
+              if (ok) void run(() => api.delete<TaskDetailDTO>(`/admin/tasks/${taskId}/slides/${slide.id}`));
             }}
           >
             <Trash2 className="h-3.5 w-3.5" />

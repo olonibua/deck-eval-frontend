@@ -8,7 +8,7 @@ export default async function UsersPage() {
   const [users, me] = await Promise.all([serverApi<UserDTO[]>('/admin/users'), getSession()]);
   return (
     <div>
-      <PageHeader title="Users" meta="Invited users get a sign-in link by email." />
+      <PageHeader eyebrow="Admin" title="Users" meta="Invited users get a sign-in link by email." />
       <UsersManager users={users} me={me as SessionUser} />
     </div>
   );

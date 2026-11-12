@@ -26,9 +26,10 @@ export function DesignShowcase() {
 
   return (
     <section className="space-y-6">
-      <h2 className="text-section font-semibold">Components</h2>
+      <h2 className="text-section font-medium">Components</h2>
       <Card className="flex flex-wrap items-center gap-2 p-4">
         <Button>Submit</Button>
+        <Button variant="yellow">New task</Button>
         <Button variant="secondary">Secondary</Button>
         <Button variant="ghost">Unclaim</Button>
         <Button variant="danger">Delete</Button>

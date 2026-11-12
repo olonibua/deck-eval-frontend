@@ -54,10 +54,10 @@ export function ExportForm({ projects }: { projects: ProjectDTO[] }) {
         </div>
       </div>
       <div className="flex flex-wrap gap-2">
-        <a href={href('csv')} className="inline-flex h-9 items-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-on-primary hover:bg-primary-hover">
+        <a href={href('csv')} className="inline-flex h-10 items-center gap-2 rounded-sm bg-fg px-4 text-sm font-medium text-page transition hover:-translate-y-px">
           <Download className="h-4 w-4" aria-hidden /> Download CSV
         </a>
-        <a href={href('json')} className="inline-flex h-9 items-center gap-2 rounded-md border border-border-strong bg-surface px-4 text-sm font-medium hover:bg-subtle">
+        <a href={href('json')} className="inline-flex h-10 items-center gap-2 rounded-sm bg-surface px-4 text-sm font-medium shadow-[inset_0_0_0_1.5px_var(--ink)] transition hover:-translate-y-px">
           <Download className="h-4 w-4" aria-hidden /> Download JSON
         </a>
       </div>

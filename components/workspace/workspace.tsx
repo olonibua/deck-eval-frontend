@@ -226,7 +226,7 @@ export function Workspace({ data, mode, backHref }: { data: WorkspaceDTO; mode: 
             </span>
           </nav>
           <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-3">
-            {mode === 'preview' && <span className="rounded-sm bg-info-soft px-2 py-1 text-meta font-medium text-info">Preview as rater</span>}
+            {mode === 'preview' && <span className="rounded-sm bg-sky px-2 py-1 text-meta font-medium text-cocoa">Preview as rater</span>}
             {mode === 'review' && submission && (
               <>
                 <span className="hidden text-meta text-fg-muted md:inline">{submission.raterName ?? submission.raterEmail}</span>
@@ -266,8 +266,8 @@ export function Workspace({ data, mode, backHref }: { data: WorkspaceDTO; mode: 
 
       <div className="mx-auto max-w-[1600px] space-y-4 px-4 pt-5 sm:px-6">
         {mode === 'rate' && !submission && (
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-info/30 bg-info-soft px-4 py-3">
-            <p className="flex items-center gap-2 text-sm text-info">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-sky px-4 py-3">
+            <p className="flex items-center gap-2 text-sm text-cocoa">
               <Info className="h-4 w-4" aria-hidden /> You haven&apos;t started this task yet. Claim it to start rating.
             </p>
             <Button size="sm" onClick={claim} loading={claiming}>
@@ -276,7 +276,7 @@ export function Workspace({ data, mode, backHref }: { data: WorkspaceDTO; mode: 
           </div>
         )}
         {mode === 'rate' && submission?.status === 'RETURNED' && (
-          <div className="flex items-center gap-2 rounded-lg border border-danger/30 bg-danger-soft px-4 py-3 text-sm text-danger">
+          <div className="flex items-center gap-2 rounded-lg bg-pink px-4 py-3 text-sm text-cocoa">
             <Undo2 className="h-4 w-4 shrink-0" aria-hidden />
             A reviewer sent this back. Their comments sit next to each field. Make your changes, then resubmit.
           </div>
@@ -341,7 +341,7 @@ export function Workspace({ data, mode, backHref }: { data: WorkspaceDTO; mode: 
           <aside className="hidden lg:col-span-5 lg:block" aria-label="Rating">
             <div className="sticky top-[112px] max-h-[calc(100vh-128px)] overflow-y-auto rounded-lg border border-border bg-surface p-5 shadow-card">
               <div className="mb-5 flex items-center justify-between gap-2">
-                <h2 className="flex items-center gap-2 text-section font-semibold">
+                <h2 className="flex items-center gap-2 text-section font-medium">
                   {activeResponse && <ResponseChip label={activeResponse.label} />}
                   {panelTitle}
                 </h2>

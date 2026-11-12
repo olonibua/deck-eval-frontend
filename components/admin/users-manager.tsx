@@ -8,7 +8,8 @@ import { api } from '@/lib/client-api';
 import { ApiError } from '@/lib/errors';
 import { formatDate } from '@/lib/format';
 import { Button } from '../ui/button';
-import { Card } from '../ui/card';
+import { Card, tableHead } from '../ui/card';
+import { useConfirm } from '../ui/dialog-provider';
 import { Dialog, DialogClose, DialogContent } from '../ui/dialog';
 import { Input, Label, Select } from '../ui/form';
 
@@ -16,6 +17,7 @@ const ROLES: Role[] = ['RATER', 'REVIEWER', 'ADMIN'];
 
 export function UsersManager({ users, me }: { users: UserDTO[]; me: SessionUser }) {
   const router = useRouter();
+  const confirm = useConfirm();
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [role, setRole] = useState<Role>('RATER');
@@ -70,12 +72,12 @@ export function UsersManager({ users, me }: { users: UserDTO[]; me: SessionUser 
       </Card>
       <Card className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="border-b border-border text-left text-meta text-fg-muted">
+          <thead className={tableHead}>
             <tr>
-              <th className="px-4 py-3 font-medium">User</th>
-              <th className="px-4 py-3 font-medium">Role</th>
-              <th className="px-4 py-3 font-medium">Joined</th>
-              <th className="px-4 py-3 font-medium">Status</th>
+              <th className="px-4 py-3 font-semibold">User</th>
+              <th className="px-4 py-3 font-semibold">Role</th>
+              <th className="px-4 py-3 font-semibold">Joined</th>
+              <th className="px-4 py-3 font-semibold">Status</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
@@ -111,8 +113,16 @@ export function UsersManager({ users, me }: { users: UserDTO[]; me: SessionUser 
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => {
-                        if (user.active && !window.confirm(`Deactivate ${user.email}? They will be signed out.`)) return;
+                      onClick={async () => {
+                        if (user.active) {
+                          const ok = await confirm({
+                            title: `Deactivate ${user.name ?? user.email}?`,
+                            description: 'They will be signed out and can no longer sign in. You can reactivate them later.',
+                            confirmLabel: 'Deactivate',
+                            destructive: true,
+                          });
+                          if (!ok) return;
+                        }
                         void run(() => api.patch(`/admin/users/${user.id}`, { active: !user.active }), user.active ? 'User deactivated' : 'User reactivated');
                       }}
                     >

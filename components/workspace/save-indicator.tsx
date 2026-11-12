@@ -28,7 +28,7 @@ export function SaveIndicator({ state }: { state: SaveState }) {
       );
     case 'offline':
       return (
-        <span className={`${base} text-warn`} role="status">
+        <span className={`${base} rounded-sm bg-yellow px-1.5 text-cocoa`} role="status">
           <CloudOff className="h-3.5 w-3.5" aria-hidden /> Offline, saved locally
         </span>
       );

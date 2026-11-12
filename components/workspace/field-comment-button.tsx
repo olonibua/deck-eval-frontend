@@ -51,13 +51,13 @@ export function FieldCommentButton({
       <Popover.Trigger
         className={cn(
           'relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-sm text-fg-muted hover:bg-muted hover:text-fg',
-          comments.length > 0 && 'text-info',
+          comments.length > 0 && 'text-fg',
         )}
         aria-label={comments.length ? `${comments.length} reviewer comments` : 'Add a comment'}
       >
         <MessageSquare className="h-4 w-4" />
         {comments.length > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-pill bg-info px-1 text-[10px] font-bold text-white">
+          <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-pill bg-orange px-1 text-[10px] font-bold text-cocoa">
             {comments.length}
           </span>
         )}

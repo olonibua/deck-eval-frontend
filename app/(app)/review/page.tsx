@@ -3,7 +3,7 @@ import { Inbox } from 'lucide-react';
 import type { ProjectDTO, ReviewQueueItemDTO, TagDTO } from '@/lib/shared';
 import { FilterBar } from '@/components/filter-bar';
 import { StatusBadge, TagChip } from '@/components/ui/badges';
-import { Card, PageHeader } from '@/components/ui/card';
+import { Card, PageHeader, tableHead } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { formatDateTime } from '@/lib/format';
 import { serverApi } from '@/lib/server-api';
@@ -21,7 +21,7 @@ export default async function ReviewQueuePage({ searchParams }: { searchParams: 
 
   return (
     <div>
-      <PageHeader title="Review" meta={`${items.length} submissions`} />
+      <PageHeader eyebrow="Quality check" title="Review" meta={`${items.length} submissions`} />
       <FilterBar
         filters={[
           {
@@ -43,12 +43,12 @@ export default async function ReviewQueuePage({ searchParams }: { searchParams: 
       ) : (
         <Card className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="border-b border-border text-left text-meta text-fg-muted">
+            <thead className={tableHead}>
               <tr>
-                <th className="px-4 py-3 font-medium">Task</th>
-                <th className="px-4 py-3 font-medium">Rater</th>
-                <th className="px-4 py-3 font-medium">Submitted</th>
-                <th className="px-4 py-3 font-medium">Status</th>
+                <th className="px-4 py-3 font-semibold">Task</th>
+                <th className="px-4 py-3 font-semibold">Rater</th>
+                <th className="px-4 py-3 font-semibold">Submitted</th>
+                <th className="px-4 py-3 font-semibold">Status</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>

@@ -10,8 +10,8 @@ export interface TabItem {
 }
 
 const DOT: Record<CompletionState, { className: string; text: string }> = {
-  empty: { className: 'bg-fg-subtle', text: 'not started' },
-  partial: { className: 'bg-warn', text: 'partly done' },
+  empty: { className: 'bg-border-strong', text: 'not started' },
+  partial: { className: 'bg-orange', text: 'partly done' },
   done: { className: 'bg-success', text: 'done' },
 };
 
@@ -23,7 +23,7 @@ export function SegmentedTabs({ items, active, onChange, label }: { items: TabIt
   }
 
   return (
-    <div role="tablist" aria-label={label} onKeyDown={onKeyDown} className="inline-flex max-w-full gap-1 overflow-x-auto rounded-[10px] bg-muted p-1">
+    <div role="tablist" aria-label={label} onKeyDown={onKeyDown} className="flex max-w-full gap-2 overflow-x-auto">
       {items.map((item) => {
         const selected = item.id === active;
         return (
@@ -36,14 +36,14 @@ export function SegmentedTabs({ items, active, onChange, label }: { items: TabIt
             tabIndex={selected ? 0 : -1}
             onClick={() => onChange(item.id)}
             className={cn(
-              'inline-flex h-8 items-center gap-2 rounded-md px-3.5 text-sm whitespace-nowrap transition-colors duration-150',
-              selected ? 'bg-surface font-semibold text-fg shadow-card' : 'text-fg-muted hover:text-fg',
+              'inline-flex h-9 items-center gap-2 rounded-sm px-3.5 text-sm font-medium whitespace-nowrap transition-colors duration-150',
+              selected ? 'bg-fg text-page' : 'border border-border-strong bg-surface text-fg hover:bg-subtle',
             )}
           >
             {item.label}
             {item.completion && (
               <>
-                <span className={cn('h-2 w-2 rounded-full', DOT[item.completion].className)} aria-hidden />
+                <span className={cn('h-2 w-2 rounded-full ring-1 ring-surface/60', DOT[item.completion].className)} aria-hidden />
                 <span className="sr-only">({DOT[item.completion].text})</span>
               </>
             )}

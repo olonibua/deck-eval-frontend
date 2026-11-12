@@ -2,11 +2,9 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Layers } from 'lucide-react';
 import { api } from '@/lib/client-api';
 import { ApiError } from '@/lib/errors';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { FieldError, Input, Label } from '@/components/ui/form';
 
 export function SignUpForm({ open }: { open: boolean }) {
@@ -34,14 +32,11 @@ export function SignUpForm({ open }: { open: boolean }) {
   }
 
   return (
-    <Card className="w-full max-w-sm p-8">
-      <div className="mb-6 flex items-center gap-2 text-lg font-semibold">
-        <Layers className="h-5 w-5 text-primary" aria-hidden />
-        Deck Eval
-      </div>
+    <div>
       {open ? (
         <form onSubmit={submit} className="space-y-4" noValidate>
-          <h1 className="text-title font-semibold">Create an account</h1>
+          <h1 className="text-title font-medium">Create an account</h1>
+          <p className="text-[15px] text-fg-muted">You&apos;ll start as a rater. An admin can change your role later.</p>
           <div>
             <Label htmlFor="name">Full name</Label>
             <Input id="name" autoComplete="name" required value={name} onChange={(e) => setName(e.target.value)} />
@@ -70,16 +65,16 @@ export function SignUpForm({ open }: { open: boolean }) {
         </form>
       ) : (
         <div className="space-y-2">
-          <h1 className="text-title font-semibold">Invite only</h1>
+          <h1 className="text-title font-medium">Invite only</h1>
           <p className="text-sm text-fg-muted">New accounts are added by an admin. Ask them to invite you, then use the link in your email.</p>
         </div>
       )}
       <p className="mt-5 text-center text-sm text-fg-muted">
         Already have an account?{' '}
-        <Link href="/login" className="font-medium text-primary hover:underline">
+        <Link href="/login" className="font-medium text-fg underline decoration-orange decoration-2 underline-offset-4 hover:decoration-fg">
           Sign in
         </Link>
       </p>
-    </Card>
+    </div>
   );
 }

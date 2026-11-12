@@ -29,7 +29,7 @@ export function ProjectsPanel({ projects, templates }: { projects: ProjectDTO[];
 
   return (
     <section>
-      <h2 className="mb-1 text-section font-semibold">Projects</h2>
+      <h2 className="mb-1 text-section font-medium">Projects</h2>
       <p className="mb-4 text-meta text-fg-muted">A project groups tasks that share a rubric. New tasks use the project&apos;s current rubric.</p>
       <Card className="divide-y divide-border">
         {projects.map((p) => (

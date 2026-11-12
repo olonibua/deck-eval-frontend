@@ -48,10 +48,10 @@ export function RankPicker({
                 disabled={readOnly && !selected}
                 onClick={() => pick(slot, response.id)}
                 className={cn(
-                  'h-8 rounded-pill border px-3 text-sm font-medium transition-colors',
+                  'h-9 rounded-sm border-[1.5px] px-3 text-sm font-medium transition-colors',
                   selected
-                    ? 'border-primary bg-primary text-on-primary'
-                    : 'border-border-strong bg-surface text-fg-muted hover:bg-subtle',
+                    ? 'border-fg bg-fg text-page'
+                    : 'border-border-strong bg-surface text-fg hover:bg-yellow',
                   usedElsewhere && 'border-dashed text-fg-subtle opacity-60',
                   readOnly && 'cursor-default',
                 )}

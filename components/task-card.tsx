@@ -11,7 +11,7 @@ export function TaskCard({ item }: { item: DashboardItemDTO }) {
   return (
     <Card className="flex flex-col gap-3 p-4">
       <div className="flex items-start justify-between gap-3">
-        <h3 className="line-clamp-2 font-medium">{task.title}</h3>
+        <h3 className="line-clamp-2 text-[17px] leading-snug font-medium tracking-[-0.2px]">{task.title}</h3>
         {submissionStatus && <StatusBadge status={submissionStatus} />}
       </div>
       <div className="flex flex-wrap items-center gap-1.5">
@@ -37,13 +37,13 @@ export function TaskCard({ item }: { item: DashboardItemDTO }) {
       </div>
       {progress && progress.total > 0 && (
         <div className="h-1.5 overflow-hidden rounded-pill bg-muted" aria-hidden>
-          <div className="h-full bg-primary" style={{ width: `${(progress.done / progress.total) * 100}%` }} />
+          <div className="h-full bg-orange" style={{ width: `${(progress.done / progress.total) * 100}%` }} />
         </div>
       )}
       <div className="mt-auto pt-1">
         <Link
           href={`/tasks/${task.id}`}
-          className="inline-flex h-8 items-center rounded-md border border-border-strong px-3 text-[13px] font-medium hover:bg-subtle"
+          className="inline-flex h-9 items-center gap-1.5 rounded-sm bg-fg px-3.5 text-[13px] font-medium text-page transition hover:-translate-y-px"
         >
           {cta}
         </Link>

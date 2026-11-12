@@ -30,10 +30,3 @@ export function timeAgo(date: Date, now = Date.now()): string {
   if (minutes < 60) return `${minutes}m ago`;
   return `${Math.round(minutes / 60)}h ago`;
 }
-
-export const RESPONSE_COLORS: Record<string, string> = {
-  A: 'var(--resp-a)',
-  B: 'var(--resp-b)',
-  C: 'var(--resp-c)',
-  D: 'var(--resp-d)',
-};

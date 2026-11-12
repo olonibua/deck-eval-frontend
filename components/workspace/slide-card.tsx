@@ -7,7 +7,7 @@ export function SlideCard({ slide, index, total, onOpen }: { slide: SlideDTO; in
   return (
     <figure className="space-y-2">
       <figcaption className="flex items-baseline gap-2">
-        <span className="text-[18px] font-bold">
+        <span className="text-[18px] font-semibold tracking-[-0.3px]">
           Slide {index + 1} of {total}
         </span>
         {slide.caption && <span className="text-meta text-fg-muted">{slide.caption}</span>}
@@ -33,7 +33,7 @@ export function SlideCard({ slide, index, total, onOpen }: { slide: SlideDTO; in
         <button
           type="button"
           onClick={onOpen}
-          className="absolute top-4 right-4 inline-flex h-8 w-8 items-center justify-center rounded-md border border-border bg-surface text-fg-muted shadow-card hover:text-fg"
+          className="absolute top-4 right-4 inline-flex h-8 w-8 items-center justify-center rounded-sm border border-border bg-surface text-fg shadow-card hover:bg-yellow"
           aria-label={`Expand slide ${index + 1}`}
         >
           <Expand className="h-4 w-4" />

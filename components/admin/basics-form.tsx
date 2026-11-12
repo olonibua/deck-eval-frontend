@@ -18,7 +18,7 @@ export interface BasicsValues {
   ratersNeeded: number;
 }
 
-const TAG_COLORS = ['#2F6B4F', '#2B4C7E', '#8A4B2C', '#6B4C8A', '#B45309', '#B91C1C', '#2563EB', '#15803D'];
+const TAG_COLORS = ['#4176C5', '#EC905D', '#C4597C', '#8FD1DC', '#F3B2AF', '#DCE88C', '#8DD0FB', '#F8E87D'];
 
 export function basicsFromTask(task?: TaskDetailDTO, projects: ProjectDTO[] = []): BasicsValues {
   return {

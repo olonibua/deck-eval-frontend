@@ -4,8 +4,10 @@ import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { Bold, Heading2, Italic, Link as LinkIcon, List, ListOrdered, Quote } from 'lucide-react';
 import { cn } from '@/lib/cn';
+import { usePrompt } from '../ui/dialog-provider';
 
 export function RichTextEditor({ value, onChange, label }: { value: string; onChange: (html: string) => void; label: string }) {
+  const prompt = usePrompt();
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [StarterKit.configure({ heading: { levels: [2, 3] }, link: { openOnClick: false } })],
@@ -27,8 +29,16 @@ export function RichTextEditor({ value, onChange, label }: { value: string; onCh
       icon: LinkIcon,
       label: 'Link',
       active: editor.isActive('link'),
-      run: () => {
-        const href = window.prompt('Link URL', editor.getAttributes('link').href ?? 'https://');
+      run: async () => {
+        const href = await prompt({
+          title: 'Add a link',
+          description: 'Leave it empty to remove the link from the selected text.',
+          label: 'Link URL',
+          type: 'url',
+          placeholder: 'https://',
+          defaultValue: editor.getAttributes('link').href ?? '',
+          confirmLabel: 'Save link',
+        });
         if (href === null) return;
         if (href === '') editor.chain().focus().unsetLink().run();
         else editor.chain().focus().extendMarkRange('link').setLink({ href }).run();

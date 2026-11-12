@@ -7,7 +7,7 @@ export default async function TagsPage() {
   const tags = await serverApi<TagDTO[]>('/tags');
   return (
     <div>
-      <PageHeader title="Tags" />
+      <PageHeader eyebrow="Admin" title="Tags" meta="Colour-coded labels for filtering tasks." />
       <TagsManager tags={tags} />
     </div>
   );

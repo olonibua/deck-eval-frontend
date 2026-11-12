@@ -1,88 +1,103 @@
 @import 'tailwindcss';
-@import '@fontsource-variable/inter';
+@import '@fontsource-variable/instrument-sans';
 
 @custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
+/* Posy design system: cream paper, cocoa ink, confectionery palette */
 :root {
-  --bg-page: #f4f4f5;
-  --bg-surface: #ffffff;
-  --bg-subtle: #fafafa;
-  --bg-muted: #e9e9ec;
-  --border: #e4e4e7;
-  --border-strong: #d4d4d8;
-  --text: #18181b;
-  --text-muted: #52525b;
-  --text-subtle: #a1a1aa;
+  --cream: #f5f1e0;
+  --paper: #fffdf2;
+  --paper-sunk: #ece6cf;
+  --ink: #4d3927;
+  --ink-soft: #6e5a47;
+  --ink-faint: #76644f;
+  --line: #e3dcc4;
+  --line-strong: #c9bea0;
+  --on-ink: #f5f1e0;
 
-  --primary: #2f6b4f;
-  --primary-hover: #275a43;
-  --primary-soft: #e6f0ea;
-  --on-primary: #ffffff;
+  --cocoa: #4d3927;
+  --blue: #4176c5;
+  --sky: #8dd0fb;
+  --teal: #8fd1dc;
+  --pink: #f3b2af;
+  --magenta: #c4597c;
+  --magenta-deep: #b24b6e;
+  --lime: #dce88c;
+  --yellow: #f8e87d;
+  --orange: #ec905d;
 
-  --info: #2563eb;
-  --info-soft: #eff6ff;
-  --warn: #b45309;
-  --warn-soft: #fef3c7;
-  --danger: #b91c1c;
-  --danger-soft: #fee2e2;
-  --success: #15803d;
-  --success-soft: #dcfce7;
+  --bg-page: var(--cream);
+  --bg-surface: var(--paper);
+  --bg-subtle: var(--paper-sunk);
+  --bg-muted: var(--paper-sunk);
+  --border: var(--line);
+  --border-strong: var(--line-strong);
+  --text: var(--ink);
+  --text-muted: var(--ink-soft);
+  --text-subtle: var(--ink-faint);
 
-  --resp-a: #2f6b4f;
-  --resp-b: #2b4c7e;
-  --resp-c: #8a4b2c;
-  --resp-d: #6b4c8a;
+  --primary: var(--ink);
+  --primary-hover: #3b2b1d;
+  --primary-soft: var(--yellow);
+  --on-primary: var(--on-ink);
 
-  --overlay: rgba(9, 9, 11, 0.92);
+  --info: var(--blue);
+  --info-soft: var(--sky);
+  --warn: #9a4f1f;
+  --warn-soft: var(--yellow);
+  --danger: #b4473f;
+  --danger-soft: var(--pink);
+  --success: #5f8a2c;
+  --success-soft: var(--lime);
 
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
+  --resp-a: var(--yellow);
+  --resp-b: var(--sky);
+  --resp-c: var(--pink);
+  --resp-d: var(--lime);
+
+  --overlay: rgba(43, 31, 20, 0.94);
+
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-frame: 24px;
+  --radius-note: 4px;
   --radius-pill: 999px;
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.06);
-  --shadow-pop: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --shadow-card: 0 1px 0 #4d39270f, 0 18px 40px -20px #4d392733;
+  --shadow-pop: 0 10px 24px -8px #4d392740;
 
   --s-1: 4px;
   --s-2: 8px;
   --s-3: 12px;
   --s-4: 16px;
-  --s-5: 20px;
   --s-6: 24px;
   --s-8: 32px;
-  --s-10: 40px;
-  --s-12: 48px;
+  --s-16: 64px;
 
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --bg-page: #0f0f11;
-    --bg-surface: #18181b;
-    --bg-subtle: #1f1f23;
-    --bg-muted: #27272a;
-    --border: #2e2e33;
-    --border-strong: #3f3f46;
-    --text: #f4f4f5;
-    --text-muted: #a1a1aa;
-    --text-subtle: #71717a;
-    --primary: #4e9b76;
-    --primary-hover: #5fb089;
-    --primary-soft: #1e3329;
-    --info-soft: #172554;
-    --warn-soft: #3b2a0a;
-    --danger-soft: #3b1212;
-    --success-soft: #0f2e1a;
-    --info: #60a5fa;
-    --warn: #fbbf24;
-    --danger: #f87171;
-    --success: #4ade80;
+    --cream: #4d3927;
+    --paper: #5a4431;
+    --paper-sunk: #3f2e1f;
+    --ink: #f5f1e0;
+    --ink-soft: #e2d8bf;
+    --ink-faint: #c2b49a;
+    --line: #6b5440;
+    --line-strong: #8a705a;
+    --on-ink: #4d3927;
+    --primary-hover: #fffdf2;
+    --danger: #f3b2af;
+    --success: #dce88c;
+    --warn: #f8e87d;
     color-scheme: dark;
   }
 }
 
 @theme inline {
-  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Instrument Sans Variable', 'Helvetica Neue', Arial, sans-serif;
 
   --color-page: var(--bg-page);
   --color-surface: var(--bg-surface);
@@ -113,11 +128,23 @@
   --color-resp-c: var(--resp-c);
   --color-resp-d: var(--resp-d);
   --color-overlay: var(--overlay);
+  --color-cocoa: var(--cocoa);
+  --color-cream: #f5f1e0;
+  --color-blue: var(--blue);
+  --color-sky: var(--sky);
+  --color-teal: var(--teal);
+  --color-pink: var(--pink);
+  --color-magenta: var(--magenta-deep);
+  --color-lime: var(--lime);
+  --color-yellow: var(--yellow);
+  --color-orange: var(--orange);
 
   --radius-sm: var(--radius-sm);
   --radius-md: var(--radius-md);
   --radius-lg: var(--radius-lg);
   --radius-pill: var(--radius-pill);
+  --radius-frame: var(--radius-frame);
+  --radius-note: var(--radius-note);
 
   --shadow-card: var(--shadow-card);
   --shadow-pop: var(--shadow-pop);
@@ -125,18 +152,25 @@
   --text-meta: 13px;
   --text-badge: 12px;
   --text-body: 15px;
-  --text-section: 20px;
-  --text-title: 24px;
+  --text-section: 22px;
+  --text-title: 36px;
+  --text-display: 48px;
 }
 
 @layer base {
   html,
   body {
-    background: var(--bg-page);
+    background: var(--bg-page) url('/posy/paper-grain.svg') 0 0 / 320px;
     color: var(--text);
     font-family: var(--font-sans);
     font-size: 15px;
     -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-weight: 500;
   }
 
   *,
@@ -146,8 +180,9 @@
   }
 
   :focus-visible {
-    outline: 2px solid var(--primary);
-    outline-offset: 2px;
+    outline: 2px solid var(--ink);
+    outline-offset: 0;
+    box-shadow: 0 0 0 6px var(--yellow);
   }
 
   ::placeholder {
@@ -156,6 +191,44 @@
 }
 
 @layer components {
+  .text-title {
+    letter-spacing: -1.1px;
+    line-height: 1.05;
+  }
+  .text-display {
+    letter-spacing: -1.6px;
+    line-height: 1;
+  }
+  .text-section {
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+  }
+  .stamp {
+    font-size: 11px;
+    line-height: 14px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .confetti {
+    background-image: url('/posy/confetti-scatter.svg');
+    background-size: cover;
+    background-position: center;
+  }
+  .notebook {
+    position: relative;
+    padding: 22px 24px 22px 52px;
+    border-radius: var(--radius-note);
+    color: var(--cocoa);
+    background:
+      radial-gradient(circle, var(--blue) 5px, transparent 5.6px) 14px 14px / 16px 36px repeat-y,
+      var(--yellow);
+    box-shadow: var(--shadow-pop);
+  }
+  .notebook-tilt {
+    transform: rotate(-1deg);
+  }
   .prose-brief {
     font-size: 15px;
     line-height: 1.6;
@@ -180,7 +253,7 @@
     margin: 1em 0 0.5em;
   }
   .prose-brief a {
-    color: var(--info);
+    color: var(--ink);
     text-decoration: underline;
   }
   .prose-brief strong {

@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { Plus } from 'lucide-react';
 import type { ProjectDTO, TemplateDTO } from '@/lib/shared';
 import { ProjectsPanel } from '@/components/admin/projects-panel';
-import { Card, PageHeader } from '@/components/ui/card';
+import { Card, PageHeader, tableHead } from '@/components/ui/card';
 import { serverApi } from '@/lib/server-api';
 
 export default async function TemplatesPage() {
@@ -11,23 +11,24 @@ export default async function TemplatesPage() {
     <div className="space-y-10">
       <div>
         <PageHeader
+          eyebrow="Admin"
           title="Rubrics"
           meta="Each rubric is versioned. Editing one that already has submissions creates a new version."
           actions={
-            <Link href="/admin/templates/new" className="inline-flex h-9 items-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-on-primary hover:bg-primary-hover">
+            <Link href="/admin/templates/new" className="inline-flex h-10 items-center gap-2 rounded-sm bg-yellow px-4 text-sm font-medium text-cocoa transition hover:-translate-y-px">
               <Plus className="h-4 w-4" aria-hidden /> New rubric
             </Link>
           }
         />
         <Card className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="border-b border-border text-left text-meta text-fg-muted">
+            <thead className={tableHead}>
               <tr>
-                <th className="px-4 py-3 font-medium">Rubric</th>
-                <th className="px-4 py-3 font-medium">Version</th>
-                <th className="px-4 py-3 font-medium">Fields</th>
-                <th className="px-4 py-3 font-medium">Submissions</th>
-                <th className="px-4 py-3 font-medium">Used by</th>
+                <th className="px-4 py-3 font-semibold">Rubric</th>
+                <th className="px-4 py-3 font-semibold">Version</th>
+                <th className="px-4 py-3 font-semibold">Fields</th>
+                <th className="px-4 py-3 font-semibold">Submissions</th>
+                <th className="px-4 py-3 font-semibold">Used by</th>
               </tr>
             </thead>
             <tbody>

@@ -81,10 +81,10 @@ export function ScaleSelector({
               disabled={readOnly && !selected}
               onClick={() => select(point)}
               className={cn(
-                'h-9 w-9 rounded-sm border text-sm font-semibold transition-colors duration-150',
+                'h-10 w-10 rounded-sm border-[1.5px] text-sm font-semibold transition-colors duration-150',
                 selected
-                  ? 'border-primary bg-primary text-on-primary'
-                  : 'border-border-strong bg-surface text-fg-muted hover:bg-subtle',
+                  ? 'border-fg bg-fg text-page'
+                  : 'border-border-strong bg-surface text-fg hover:bg-yellow',
                 invalid && !selected && 'border-danger',
                 readOnly && 'cursor-default',
                 readOnly && !selected && 'opacity-50',

@@ -4,7 +4,7 @@ import { PageHeader } from '@/components/ui/card';
 export default function NewTemplatePage() {
   return (
     <div>
-      <PageHeader title="New rubric" />
+      <PageHeader eyebrow="Rubrics" title="New rubric" />
       <TemplateBuilder template={null} />
     </div>
   );

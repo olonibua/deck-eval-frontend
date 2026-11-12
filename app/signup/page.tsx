@@ -1,3 +1,4 @@
+import { AuthFrame } from '@/components/auth-frame';
 import { SignUpForm } from './signup-form';
 
 const API_URL = process.env.API_URL ?? 'http://localhost:4000';
@@ -13,8 +14,8 @@ async function signupOpen() {
 
 export default async function SignUpPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-page px-4">
+    <AuthFrame>
       <SignUpForm open={await signupOpen()} />
-    </div>
+    </AuthFrame>
   );
 }

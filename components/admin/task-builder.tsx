@@ -13,6 +13,7 @@ import { Button } from '../ui/button';
 import { PriorityBadge, ResponseChip, StatusBadge } from '../ui/badges';
 import { Card } from '../ui/card';
 import { ConfirmDialog } from '../ui/confirm';
+import { useConfirm } from '../ui/dialog-provider';
 import { FileChip } from '../ui/file-chip';
 import { Input, Label } from '../ui/form';
 import { RubricRenderer } from '../workspace/rubric-renderer';
@@ -50,6 +51,7 @@ export function TaskBuilder({
   fields: RubricFieldDef[];
 }) {
   const router = useRouter();
+  const confirm = useConfirm();
   const pathname = usePathname();
   const params = useSearchParams();
   const step = Math.min(STEPS.length, Math.max(1, Number(params.get('step') ?? 1)));
@@ -77,13 +79,13 @@ export function TaskBuilder({
             <StatusBadge status={task.status} />
             <PriorityBadge priority={task.priority} />
           </div>
-          <h1 className="text-title font-semibold">{task.title}</h1>
+          <h1 className="text-title font-medium">{task.title}</h1>
           <p className="mt-1 text-meta text-fg-muted">
             {task.projectName} · {task.responses.length} responses · {task.submissionCount} {task.submissionCount === 1 ? 'submission' : 'submissions'}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link href={`${base}/preview`} className="inline-flex h-9 items-center gap-2 rounded-md border border-border-strong bg-surface px-4 text-sm font-medium hover:bg-subtle">
+          <Link href={`${base}/preview`} className="inline-flex h-10 items-center gap-2 rounded-sm bg-surface px-4 text-sm font-medium shadow-[inset_0_0_0_1.5px_var(--ink)] transition hover:-translate-y-px">
             <Eye className="h-4 w-4" aria-hidden /> Preview as rater
           </Link>
           <Button variant="secondary" onClick={duplicate}>
@@ -100,7 +102,7 @@ export function TaskBuilder({
             </Button>
           )}
           {task.status === 'DRAFT' || task.status === 'ARCHIVED' ? (
-            <Button onClick={() => setStatus('PUBLISHED')}>
+            <Button variant="yellow" onClick={() => setStatus('PUBLISHED')}>
               <Send className="h-4 w-4" aria-hidden /> Publish
             </Button>
           ) : (
@@ -124,11 +126,11 @@ export function TaskBuilder({
                 onClick={() => goTo(n)}
                 aria-current={current ? 'step' : undefined}
                 className={cn(
-                  'inline-flex h-9 items-center gap-2 rounded-pill border px-3 text-sm',
-                  current ? 'border-primary bg-primary-soft font-semibold' : 'border-border bg-surface text-fg-muted hover:bg-subtle',
+                  'inline-flex h-9 items-center gap-2 rounded-sm border px-3 text-sm',
+                  current ? 'border-fg bg-fg font-medium text-page' : 'border-border-strong bg-surface text-fg hover:bg-subtle',
                 )}
               >
-                <span className={cn('flex h-5 w-5 items-center justify-center rounded-full text-[12px] font-bold', current ? 'bg-primary text-on-primary' : 'bg-muted')}>
+                <span className={cn('flex h-5 w-5 items-center justify-center rounded-full text-[12px] font-bold', current ? 'bg-yellow text-cocoa' : 'bg-muted')}>
                   {n < step ? <Check className="h-3 w-3" /> : n}
                 </span>
                 {label}
@@ -183,7 +185,7 @@ export function TaskBuilder({
             {task.responses.map((response) => (
               <section key={response.id} className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h2 className="flex items-center gap-2 text-section font-semibold">
+                  <h2 className="flex items-center gap-2 text-section font-medium">
                     <ResponseChip label={response.label} /> Response {response.label}
                     <span className="text-meta font-normal text-fg-muted">{response.slides.length} slides</span>
                   </h2>
@@ -192,7 +194,13 @@ export function TaskBuilder({
                     size="sm"
                     disabled={task.submissionCount > 0}
                     onClick={async () => {
-                      if (!window.confirm(`Delete response ${response.label} and its slides?`)) return;
+                      const ok = await confirm({
+                        title: `Remove Response ${response.label}?`,
+                        description: 'Its slides and files are deleted, and the responses after it are relabelled.',
+                        confirmLabel: 'Remove response',
+                        destructive: true,
+                      });
+                      if (!ok) return;
                       const updated = await attempt(() => api.delete<TaskDetailDTO>(`${base}/responses/${response.id}`));
                       if (updated) setTask(updated);
                     }}
@@ -322,7 +330,7 @@ function AssignmentStep({
   return (
     <div className="grid gap-8 lg:grid-cols-2">
       <div className="space-y-5">
-        <h2 className="text-section font-semibold">Assignment</h2>
+        <h2 className="text-section font-medium">Assignment</h2>
         <fieldset className="space-y-2">
           <legend className="sr-only">Who can pick this up</legend>
           <label className="flex items-start gap-2.5">
@@ -375,7 +383,7 @@ function AssignmentStep({
         </Button>
       </div>
       <div className="space-y-3">
-        <h2 className="text-section font-semibold">Rubric</h2>
+        <h2 className="text-section font-medium">Rubric</h2>
         <p className="text-meta text-fg-muted">This task uses the project&apos;s rubric. Edit rubrics under Rubrics.</p>
         <div className="flex flex-wrap gap-1">
           {task.responses.map((r) => (
