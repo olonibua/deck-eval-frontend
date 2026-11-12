@@ -94,6 +94,7 @@ export function useHumanise({ fields, responses, answers, applyAnswers }: Option
       const undo = Object.keys(changes).length ? { label: 'Undo', onClick: () => latest.current.applyAnswers(previous) } : undefined;
       if (result.failed.length && !result.items.length) toast.error(text);
       else toast.success(text, { action: undo, duration: 10_000 });
+      if (result.notice) toast.info(result.notice, { duration: 15_000 });
     } catch (error) {
       toast.error((error as Error).message);
     } finally {
