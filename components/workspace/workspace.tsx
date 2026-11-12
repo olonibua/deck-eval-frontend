@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Clock, Flag, Info, Lightbulb, Sparkles, Undo2, X } from 'lucide-react';
+import { ArrowLeft, Clock, Flag, Info, Lightbulb, Sparkles, Undo2, Wand2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   answerKey,
@@ -38,9 +38,11 @@ import { SegmentedTabs, type TabItem } from './segmented-tabs';
 import { SlideCard } from './slide-card';
 import { SlideLightbox } from './slide-lightbox';
 import { HumaniseAllMenu, HumaniseTools } from './humanise-tools';
-import { useHumanise } from './use-humanise';
+import { HUMANISE_MODES } from '@/lib/shared';
+import { MODE_LABELS, useHumanise } from './use-humanise';
 import { useQc } from './use-qc';
 import { useConfirm } from '../ui/dialog-provider';
+import { MoreMenu, type MenuItem } from '../ui/more-menu';
 
 export type WorkspaceMode = 'rate' | 'review' | 'preview';
 
@@ -254,20 +256,41 @@ export function Workspace({ data, mode, backHref, canQc = false }: { data: Works
     />
   );
 
+  const menuItems: MenuItem[] =
+    mode === 'rate' && submission
+      ? [
+          ...(aiTools
+            ? [
+                { label: qc.running ? 'QC is running…' : 'QC', icon: Sparkles, onSelect: () => void runQc(), disabled: qc.running || humanise.anyBusy, hint: 'Rate every response with AI' },
+                ...HUMANISE_MODES.map((m) => ({
+                  label: `${MODE_LABELS[m]} all`,
+                  icon: Wand2,
+                  onSelect: () => void humanise.runAll(m),
+                  disabled: qc.running || humanise.anyBusy,
+                })),
+              ]
+            : []),
+          ...(editable ? [{ label: 'Escalate', icon: Flag, onSelect: () => setEscalateOpen(true), hint: 'Tell an admin something is wrong' }] : []),
+          ...(submission.status === 'DRAFT' ? [{ label: 'Unclaim', icon: Undo2, onSelect: () => setUnclaimOpen(true), hint: 'Give the task back to the queue' }] : []),
+        ]
+      : [];
+
   const panelTitle = activeResponse ? `Response ${activeResponse.label}` : 'Ranking';
   const lightboxResponse = lightbox ? responses.find((r) => r.id === lightbox.responseId) : null;
 
   return (
     <div className="pb-24 lg:pb-10">
       <header className="sticky top-0 z-30 h-14 border-b border-border bg-surface">
-        <div className="mx-auto flex h-full max-w-[1600px] items-center gap-3 px-4 sm:px-6">
+        <div className="mx-auto flex h-full max-w-[1600px] items-center gap-2 px-3 sm:gap-3 sm:px-6">
           <Link href={backHref} className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-fg-muted hover:bg-muted" aria-label="Back">
             <ArrowLeft className="h-4 w-4" />
           </Link>
           <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-2 text-meta">
             <span className="hidden whitespace-nowrap text-fg-muted md:inline">{task.projectName}</span>
             <span className="hidden text-fg-subtle md:inline">/</span>
-            <PriorityBadge priority={task.priority} />
+            <span className="hidden sm:inline-flex">
+              <PriorityBadge priority={task.priority} />
+            </span>
             <span className="truncate text-[15px] font-medium" title={task.title}>
               {task.title}
             </span>
@@ -286,24 +309,28 @@ export function Workspace({ data, mode, backHref, canQc = false }: { data: Works
             {mode === 'rate' && submission && (
               <>
                 {aiTools && (
-                  <Button variant="yellow" size="sm" onClick={runQc} loading={qc.running} disabled={humanise.anyBusy} title="Rate every response with AI using the QC rules">
+                  <Button variant="yellow" size="sm" className="hidden lg:inline-flex" onClick={runQc} loading={qc.running} disabled={humanise.anyBusy} title="Rate every response with AI using the QC rules">
                     {!qc.running && <Sparkles className="h-4 w-4" aria-hidden />}
                     {qc.running ? 'Running QC…' : 'QC'}
                   </Button>
                 )}
-                {aiTools && <HumaniseAllMenu busy={humanise.anyBusy} disabled={qc.running} onRun={humanise.runAll} />}
+                {aiTools && (
+                  <span className="hidden lg:inline-flex">
+                    <HumaniseAllMenu busy={humanise.anyBusy} disabled={qc.running} onRun={humanise.runAll} />
+                  </span>
+                )}
                 {editable && <SaveIndicator state={autosave.state} />}
                 <span className="hidden items-center gap-1 text-meta text-fg-muted tabular-nums sm:inline-flex" aria-label="Active time">
                   <Clock className="h-3.5 w-3.5" aria-hidden /> {formatDuration(seconds)}
                 </span>
                 {!editable && <StatusBadge status={submission.status} />}
                 {submission.status === 'DRAFT' && (
-                  <Button variant="ghost" size="sm" className="hidden md:inline-flex" onClick={() => setUnclaimOpen(true)}>
+                  <Button variant="ghost" size="sm" className="hidden lg:inline-flex" onClick={() => setUnclaimOpen(true)}>
                     <Undo2 className="h-4 w-4" aria-hidden /> Unclaim
                   </Button>
                 )}
                 {editable && (
-                  <Button variant="ghost" size="sm" className="hidden md:inline-flex" onClick={() => setEscalateOpen(true)}>
+                  <Button variant="ghost" size="sm" className="hidden lg:inline-flex" onClick={() => setEscalateOpen(true)}>
                     <Flag className="h-4 w-4" aria-hidden /> Escalate
                   </Button>
                 )}
@@ -312,6 +339,7 @@ export function Workspace({ data, mode, backHref, canQc = false }: { data: Works
                     {submission.status === 'RETURNED' ? 'Resubmit' : 'Submit'}
                   </Button>
                 )}
+                <MoreMenu items={menuItems} className="lg:hidden" />
               </>
             )}
           </div>

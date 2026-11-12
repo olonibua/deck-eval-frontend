@@ -46,9 +46,9 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
                 <tr>
                   <th className="px-4 py-3 font-semibold">Task</th>
                   <th className="px-4 py-3 font-semibold">Status</th>
-                  <th className="px-4 py-3 font-semibold">Submitted</th>
-                  <th className="px-4 py-3 font-semibold">Last activity</th>
-                  <th className="px-4 py-3 font-semibold">Active time</th>
+                  <th className="hidden md:table-cell px-4 py-3 font-semibold">Submitted</th>
+                  <th className="hidden md:table-cell px-4 py-3 font-semibold">Last activity</th>
+                  <th className="hidden sm:table-cell px-4 py-3 font-semibold">Active time</th>
                   <th className="px-4 py-3" />
                 </tr>
               </thead>
@@ -67,9 +67,9 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
                     <td className="px-4 py-3">
                       <StatusBadge status={task.status} />
                     </td>
-                    <td className="px-4 py-3 text-fg-muted">{formatDateTime(task.submittedAt)}</td>
-                    <td className="px-4 py-3 text-fg-muted">{formatDateTime(task.updatedAt)}</td>
-                    <td className="px-4 py-3 tabular-nums">{formatDuration(task.activeSeconds)}</td>
+                    <td className="hidden md:table-cell px-4 py-3 text-fg-muted">{formatDateTime(task.submittedAt)}</td>
+                    <td className="hidden md:table-cell px-4 py-3 text-fg-muted">{formatDateTime(task.updatedAt)}</td>
+                    <td className="hidden sm:table-cell px-4 py-3 tabular-nums">{formatDuration(task.activeSeconds)}</td>
                     <td className="px-4 py-3 text-right">
                       <Link
                         href={`/review/${task.submissionId}`}

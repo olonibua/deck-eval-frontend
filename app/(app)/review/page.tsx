@@ -49,8 +49,8 @@ export default async function ReviewQueuePage({ searchParams }: { searchParams: 
             <thead className={tableHead}>
               <tr>
                 <th className="px-4 py-3 font-semibold">Task</th>
-                <th className="px-4 py-3 font-semibold">Rater</th>
-                <th className="px-4 py-3 font-semibold">Submitted</th>
+                <th className="hidden sm:table-cell px-4 py-3 font-semibold">Rater</th>
+                <th className="hidden md:table-cell px-4 py-3 font-semibold">Submitted</th>
                 <th className="px-4 py-3 font-semibold">Status</th>
                 <th className="px-4 py-3" />
               </tr>
@@ -62,12 +62,13 @@ export default async function ReviewQueuePage({ searchParams }: { searchParams: 
                     <p className="font-medium">{item.taskTitle}</p>
                     <div className="mt-1 flex flex-wrap items-center gap-1.5 text-meta text-fg-muted">
                       {item.projectName}
+                      <span className="sm:hidden">· {item.raterName ?? item.raterEmail}</span>
                       {item.tags.map((tag) => (
                         <TagChip key={tag.id} tag={tag} />
                       ))}
                     </div>
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="hidden sm:table-cell px-4 py-3">
                     {viewer.role === 'ADMIN' ? (
                       <Link href={`/admin/users/${item.raterId}`} className="hover:underline">
                         {item.raterName ?? item.raterEmail}
@@ -76,7 +77,7 @@ export default async function ReviewQueuePage({ searchParams }: { searchParams: 
                       (item.raterName ?? item.raterEmail)
                     )}
                   </td>
-                  <td className="px-4 py-3 text-fg-muted">{formatDateTime(item.submittedAt)}</td>
+                  <td className="hidden md:table-cell px-4 py-3 text-fg-muted">{formatDateTime(item.submittedAt)}</td>
                   <td className="px-4 py-3">
                     <StatusBadge status={item.status} />
                   </td>

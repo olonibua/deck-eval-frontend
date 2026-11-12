@@ -63,6 +63,7 @@ export function QcRulesEditor({ initial }: { initial: GuideDTO[] }) {
     <div className="space-y-4">
       <SegmentedTabs
         label="Guides"
+        wrap
         active={activeKey}
         onChange={setActiveKey}
         items={guides.map((g) => ({ id: g.key, label: drafts[g.key] !== g.body ? `${g.title} •` : g.title }))}

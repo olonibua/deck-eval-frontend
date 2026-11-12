@@ -9,15 +9,15 @@ export interface NavSection {
   links: Array<{ href: string; label: string; dot: string }>;
 }
 
-export function NavLinks({ sections }: { sections: NavSection[] }) {
+export function NavLinks({ sections, stacked = false }: { sections: NavSection[]; stacked?: boolean }) {
   const pathname = usePathname();
   const isActive = (href: string) => (href === '/' || href === '/admin' ? pathname === href : pathname.startsWith(href));
 
   return (
-    <nav aria-label="Main" className="flex gap-1 overflow-x-auto px-3 pb-3 lg:block lg:space-y-6 lg:overflow-visible lg:pb-0">
+    <nav aria-label="Main" className={cn('space-y-6 px-3', !stacked && 'hidden lg:block')}>
       {sections.map((section) => (
-        <div key={section.title} className="flex gap-1 lg:block lg:space-y-1">
-          <p className="stamp hidden px-3 pb-1 lg:block">{section.title}</p>
+        <div key={section.title} className="space-y-1">
+          <p className="stamp px-3 pb-1">{section.title}</p>
           {section.links.map((link) => {
             const active = isActive(link.href);
             return (
@@ -26,7 +26,7 @@ export function NavLinks({ sections }: { sections: NavSection[] }) {
                 href={link.href}
                 aria-current={active ? 'page' : undefined}
                 className={cn(
-                  'flex items-center gap-3 rounded-md px-3 py-2 text-sm whitespace-nowrap transition-colors',
+                  'flex items-center gap-3 rounded-md px-3 py-2.5 text-sm whitespace-nowrap transition-colors lg:py-2',
                   active ? 'bg-fg font-medium text-page' : 'text-fg hover:bg-surface',
                 )}
               >

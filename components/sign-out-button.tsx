@@ -2,9 +2,8 @@
 
 import { LogOut } from 'lucide-react';
 import { api } from '@/lib/client-api';
-import { cn } from '@/lib/cn';
 
-export function SignOutButton({ compact }: { compact?: boolean }) {
+export function SignOutButton() {
   return (
     <button
       type="button"
@@ -12,10 +11,7 @@ export function SignOutButton({ compact }: { compact?: boolean }) {
         await api.post('/auth/logout');
         window.location.href = '/login';
       }}
-      className={cn(
-        'inline-flex items-center gap-2 rounded-md text-sm text-fg-muted transition-colors hover:bg-surface hover:text-fg',
-        compact ? 'h-9 px-2.5' : 'mt-2 h-9 w-full px-3',
-      )}
+      className="mt-2 inline-flex h-9 w-full items-center gap-2 rounded-md px-3 text-sm text-fg-muted transition-colors hover:bg-surface hover:text-fg"
     >
       <LogOut className="h-4 w-4" aria-hidden />
       Sign out

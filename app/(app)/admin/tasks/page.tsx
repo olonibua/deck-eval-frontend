@@ -63,9 +63,9 @@ export default async function AdminTasksPage({ searchParams }: { searchParams: P
               <tr>
                 <th className="px-4 py-3 font-semibold">Task</th>
                 <th className="px-4 py-3 font-semibold">Status</th>
-                <th className="px-4 py-3 font-semibold">Raters</th>
-                <th className="px-4 py-3 font-semibold">Due</th>
-                <th className="px-4 py-3 font-semibold">Updated</th>
+                <th className="hidden sm:table-cell px-4 py-3 font-semibold">Raters</th>
+                <th className="hidden md:table-cell px-4 py-3 font-semibold">Due</th>
+                <th className="hidden md:table-cell px-4 py-3 font-semibold">Updated</th>
               </tr>
             </thead>
             <tbody>
@@ -78,6 +78,9 @@ export default async function AdminTasksPage({ searchParams }: { searchParams: P
                     <div className="mt-1 flex flex-wrap items-center gap-1.5 text-meta text-fg-muted">
                       <PriorityBadge priority={task.priority} />
                       {task.projectName} · {task.responseCount} responses
+                      <span className="sm:hidden">
+                        · {task.submissionCount}/{task.ratersNeeded} raters
+                      </span>
                       {task.tags.map((tag) => (
                         <TagChip key={tag.id} tag={tag} />
                       ))}
@@ -86,11 +89,11 @@ export default async function AdminTasksPage({ searchParams }: { searchParams: P
                   <td className="px-4 py-3">
                     <StatusBadge status={task.status} />
                   </td>
-                  <td className="px-4 py-3 tabular-nums">
+                  <td className="hidden sm:table-cell px-4 py-3 tabular-nums">
                     {task.submissionCount} / {task.ratersNeeded}
                   </td>
-                  <td className="px-4 py-3 text-fg-muted">{formatDate(task.dueAt)}</td>
-                  <td className="px-4 py-3 text-fg-muted">{formatDate(task.updatedAt)}</td>
+                  <td className="hidden md:table-cell px-4 py-3 text-fg-muted">{formatDate(task.dueAt)}</td>
+                  <td className="hidden md:table-cell px-4 py-3 text-fg-muted">{formatDate(task.updatedAt)}</td>
                 </tr>
               ))}
             </tbody>

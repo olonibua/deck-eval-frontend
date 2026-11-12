@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { KeyRound, ListChecks, UserCheck, UserX } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Role, SessionUser, UserDTO } from '@/lib/shared';
 import { api } from '@/lib/client-api';
@@ -13,6 +14,7 @@ import { Card, tableHead } from '../ui/card';
 import { useConfirm } from '../ui/dialog-provider';
 import { Dialog, DialogClose, DialogContent } from '../ui/dialog';
 import { Input, Label, Select } from '../ui/form';
+import { MoreMenu } from '../ui/more-menu';
 
 const ROLES: Role[] = ['RATER', 'REVIEWER', 'ADMIN'];
 
@@ -37,6 +39,19 @@ export function UsersManager({ users, me }: { users: UserDTO[]; me: SessionUser 
     }
   }
 
+  async function toggleActive(user: UserDTO) {
+    if (user.active) {
+      const ok = await confirm({
+        title: `Deactivate ${user.name ?? user.email}?`,
+        description: 'They will be signed out and can no longer sign in. You can reactivate them later.',
+        confirmLabel: 'Deactivate',
+        destructive: true,
+      });
+      if (!ok) return;
+    }
+    void run(() => api.patch(`/admin/users/${user.id}`, { active: !user.active }), user.active ? 'User deactivated' : 'User reactivated');
+  }
+
   return (
     <div className="space-y-6">
       <Card className="p-4">
@@ -50,11 +65,11 @@ export function UsersManager({ users, me }: { users: UserDTO[]; me: SessionUser 
             }
           }}
         >
-          <div className="min-w-56 flex-1">
+          <div className="w-full sm:w-auto sm:min-w-56 sm:flex-1">
             <Label htmlFor="invite-email">Email</Label>
             <Input id="invite-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
-          <div className="min-w-40">
+          <div className="min-w-0 flex-1 sm:min-w-40 sm:flex-none">
             <Label htmlFor="invite-name">Name</Label>
             <Input id="invite-name" value={name} onChange={(e) => setName(e.target.value)} />
           </div>
@@ -77,8 +92,8 @@ export function UsersManager({ users, me }: { users: UserDTO[]; me: SessionUser 
             <tr>
               <th className="px-4 py-3 font-semibold">User</th>
               <th className="px-4 py-3 font-semibold">Role</th>
-              <th className="px-4 py-3 font-semibold">Joined</th>
-              <th className="px-4 py-3 font-semibold">Status</th>
+              <th className="hidden md:table-cell px-4 py-3 font-semibold">Joined</th>
+              <th className="hidden md:table-cell px-4 py-3 font-semibold">Status</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
@@ -94,7 +109,7 @@ export function UsersManager({ users, me }: { users: UserDTO[]; me: SessionUser 
                 <td className="px-4 py-3">
                   <Select
                     aria-label={`Role for ${user.email}`}
-                    className="w-36"
+                    className="w-32 sm:w-36"
                     value={user.role}
                     disabled={user.id === me.id}
                     onChange={(e) => run(() => api.patch(`/admin/users/${user.id}`, { role: e.target.value }), 'Role updated')}
@@ -106,35 +121,33 @@ export function UsersManager({ users, me }: { users: UserDTO[]; me: SessionUser 
                     ))}
                   </Select>
                 </td>
-                <td className="px-4 py-3 text-fg-muted">{formatDate(user.createdAt)}</td>
-                <td className="px-4 py-3">{user.active ? 'Active' : <span className="text-fg-subtle">Deactivated</span>}</td>
+                <td className="hidden md:table-cell px-4 py-3 text-fg-muted">{formatDate(user.createdAt)}</td>
+                <td className="hidden md:table-cell px-4 py-3">{user.active ? 'Active' : <span className="text-fg-subtle">Deactivated</span>}</td>
                 <td className="px-4 py-3 text-right whitespace-nowrap">
-                  <Link href={`/admin/users/${user.id}`} className="mr-1 inline-flex h-8 items-center rounded-md px-3 text-[13px] font-medium text-fg-muted hover:bg-muted hover:text-fg">
-                    View tasks
-                  </Link>
-                  <Button variant="ghost" size="sm" onClick={() => setPasswordFor(user)}>
-                    Set password
-                  </Button>
-                  {user.id !== me.id && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={async () => {
-                        if (user.active) {
-                          const ok = await confirm({
-                            title: `Deactivate ${user.name ?? user.email}?`,
-                            description: 'They will be signed out and can no longer sign in. You can reactivate them later.',
-                            confirmLabel: 'Deactivate',
-                            destructive: true,
-                          });
-                          if (!ok) return;
-                        }
-                        void run(() => api.patch(`/admin/users/${user.id}`, { active: !user.active }), user.active ? 'User deactivated' : 'User reactivated');
-                      }}
-                    >
-                      {user.active ? 'Deactivate' : 'Reactivate'}
+                  <div className="hidden lg:block">
+                    <Link href={`/admin/users/${user.id}`} className="mr-1 inline-flex h-8 items-center rounded-md px-3 text-[13px] font-medium text-fg-muted hover:bg-muted hover:text-fg">
+                      View tasks
+                    </Link>
+                    <Button variant="ghost" size="sm" onClick={() => setPasswordFor(user)}>
+                      Set password
                     </Button>
-                  )}
+                    {user.id !== me.id && (
+                      <Button variant="ghost" size="sm" onClick={() => void toggleActive(user)}>
+                        {user.active ? 'Deactivate' : 'Reactivate'}
+                      </Button>
+                    )}
+                  </div>
+                  <MoreMenu
+                    className="lg:hidden"
+                    label={`Actions for ${user.name ?? user.email}`}
+                    items={[
+                      { label: 'View tasks', icon: ListChecks, onSelect: () => router.push(`/admin/users/${user.id}`) },
+                      { label: 'Set password', icon: KeyRound, onSelect: () => setPasswordFor(user) },
+                      ...(user.id !== me.id
+                        ? [{ label: user.active ? 'Deactivate' : 'Reactivate', icon: user.active ? UserX : UserCheck, onSelect: () => void toggleActive(user) }]
+                        : []),
+                    ]}
+                  />
                 </td>
               </tr>
             ))}

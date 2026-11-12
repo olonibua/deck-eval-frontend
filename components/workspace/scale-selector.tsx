@@ -55,13 +55,14 @@ export function ScaleSelector({
   const endLabel = config.labels?.[String(max)];
 
   return (
-    <div className="inline-flex flex-col">
+    <div className="inline-flex w-full max-w-max flex-col">
       <div
         role="radiogroup"
         aria-label={label}
         aria-invalid={invalid || undefined}
         aria-readonly={readOnly || undefined}
-        className="flex flex-wrap gap-1.5"
+        className="grid gap-1.5"
+        style={{ gridTemplateColumns: `repeat(${points.length}, minmax(0, 2.5rem))` }}
         onKeyDown={onKeyDown}
       >
         {points.map((point, index) => {
@@ -81,7 +82,7 @@ export function ScaleSelector({
               disabled={readOnly && !selected}
               onClick={() => select(point)}
               className={cn(
-                'h-10 w-10 rounded-sm border-[1.5px] text-sm font-semibold transition-colors duration-150',
+                'h-10 w-full min-w-0 rounded-sm border-[1.5px] text-sm font-semibold transition-colors duration-150',
                 selected
                   ? 'border-fg bg-fg text-page'
                   : 'border-border-strong bg-surface text-fg hover:bg-yellow',

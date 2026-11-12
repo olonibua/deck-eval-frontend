@@ -25,10 +25,10 @@ export default async function TemplatesPage() {
             <thead className={tableHead}>
               <tr>
                 <th className="px-4 py-3 font-semibold">Rubric</th>
-                <th className="px-4 py-3 font-semibold">Version</th>
-                <th className="px-4 py-3 font-semibold">Fields</th>
+                <th className="hidden sm:table-cell px-4 py-3 font-semibold">Version</th>
+                <th className="hidden md:table-cell px-4 py-3 font-semibold">Fields</th>
                 <th className="px-4 py-3 font-semibold">Submissions</th>
-                <th className="px-4 py-3 font-semibold">Used by</th>
+                <th className="hidden md:table-cell px-4 py-3 font-semibold">Used by</th>
               </tr>
             </thead>
             <tbody>
@@ -38,11 +38,12 @@ export default async function TemplatesPage() {
                     <Link href={`/admin/templates/${t.id}`} className="font-medium hover:underline">
                       {t.name}
                     </Link>
+                    <span className="ml-1.5 text-meta text-fg-muted sm:hidden">v{t.version}</span>
                   </td>
-                  <td className="px-4 py-3">v{t.version}</td>
-                  <td className="px-4 py-3">{t.fields.filter((f) => f.type !== 'SECTION').length}</td>
+                  <td className="hidden sm:table-cell px-4 py-3">v{t.version}</td>
+                  <td className="hidden md:table-cell px-4 py-3">{t.fields.filter((f) => f.type !== 'SECTION').length}</td>
                   <td className="px-4 py-3">{t.submissionCount}</td>
-                  <td className="px-4 py-3 text-fg-muted">{t.projectNames.join(', ') || '—'}</td>
+                  <td className="hidden md:table-cell px-4 py-3 text-fg-muted">{t.projectNames.join(', ') || '—'}</td>
                 </tr>
               ))}
             </tbody>

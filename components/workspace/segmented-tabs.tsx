@@ -15,7 +15,19 @@ const DOT: Record<CompletionState, { className: string; text: string }> = {
   done: { className: 'bg-success', text: 'done' },
 };
 
-export function SegmentedTabs({ items, active, onChange, label }: { items: TabItem[]; active: string; onChange: (id: string) => void; label: string }) {
+export function SegmentedTabs({
+  items,
+  active,
+  onChange,
+  label,
+  wrap = false,
+}: {
+  items: TabItem[];
+  active: string;
+  onChange: (id: string) => void;
+  label: string;
+  wrap?: boolean;
+}) {
   function onKeyDown(event: React.KeyboardEvent) {
     const index = items.findIndex((i) => i.id === active);
     if (event.key === 'ArrowRight') onChange(items[(index + 1) % items.length].id);
@@ -23,7 +35,7 @@ export function SegmentedTabs({ items, active, onChange, label }: { items: TabIt
   }
 
   return (
-    <div role="tablist" aria-label={label} onKeyDown={onKeyDown} className="flex max-w-full gap-2 overflow-x-auto">
+    <div role="tablist" aria-label={label} onKeyDown={onKeyDown} className={cn('relative flex max-w-full gap-2', wrap ? 'flex-wrap' : 'overflow-x-auto')}>
       {items.map((item) => {
         const selected = item.id === active;
         return (

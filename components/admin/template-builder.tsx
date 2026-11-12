@@ -80,7 +80,7 @@ function FieldEditor({ field, onChange, onRemove }: { field: DraftField; onChang
           <span className="rounded-sm bg-muted px-1.5 py-0.5 text-[11px] font-semibold tracking-wide text-fg-muted uppercase">{TYPE_LABELS[field.type]}</span>
           <span className={cn('truncate text-sm', field.type === 'SECTION' ? 'font-semibold' : 'font-medium')}>{field.label}</span>
           {field.required && <span className="text-danger">*</span>}
-          <span className="ml-auto text-meta whitespace-nowrap text-fg-subtle">{field.scope === 'PER_RESPONSE' ? 'per response' : 'per task'}</span>
+          <span className="ml-auto hidden text-meta whitespace-nowrap text-fg-subtle sm:inline">{field.scope === 'PER_RESPONSE' ? 'per response' : 'per task'}</span>
           <ChevronDown className={cn('h-4 w-4 shrink-0 text-fg-muted transition-transform', field.open && 'rotate-180')} aria-hidden />
         </button>
         <button type="button" onClick={onRemove} className="inline-flex h-7 w-7 items-center justify-center rounded-sm text-fg-muted hover:bg-danger-soft hover:text-danger" aria-label={`Remove ${field.label}`}>
@@ -230,7 +230,7 @@ export function TemplateBuilder({ template }: { template: TemplateDTO | null }) 
   }
 
   return (
-    <div className="grid gap-6 xl:grid-cols-2">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-2">
       <div className="space-y-4">
         <Card className="space-y-4 p-5">
           <div>
@@ -257,9 +257,9 @@ export function TemplateBuilder({ template }: { template: TemplateDTO | null }) 
             </SortableContext>
           </DndContext>
           <div className="flex flex-wrap items-end gap-2 border-t border-border pt-4">
-            <div>
+            <div className="w-full sm:w-auto">
               <Label htmlFor="add-type">Add field</Label>
-              <Select id="add-type" value={addType} onChange={(e) => setAddType(e.target.value as FieldType)} className="w-44">
+              <Select id="add-type" value={addType} onChange={(e) => setAddType(e.target.value as FieldType)} className="sm:w-44">
                 {FIELD_TYPES.map((t) => (
                   <option key={t} value={t}>
                     {TYPE_LABELS[t]}
@@ -267,7 +267,7 @@ export function TemplateBuilder({ template }: { template: TemplateDTO | null }) 
                 ))}
               </Select>
             </div>
-            <Select aria-label="Scope for new field" value={addScope} onChange={(e) => setAddScope(e.target.value as FieldScope)} className="w-40">
+            <Select aria-label="Scope for new field" value={addScope} onChange={(e) => setAddScope(e.target.value as FieldScope)} className="min-w-0 flex-1 sm:w-40 sm:flex-none">
               <option value="PER_RESPONSE">Per response</option>
               <option value="PER_TASK">Per task</option>
             </Select>
@@ -282,7 +282,7 @@ export function TemplateBuilder({ template }: { template: TemplateDTO | null }) 
         </Card>
       </div>
       <div>
-        <Card className="sticky top-20 p-5">
+        <Card className="p-5 xl:sticky xl:top-6">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-section font-medium">Live preview</h2>
             <div className="flex gap-1">
