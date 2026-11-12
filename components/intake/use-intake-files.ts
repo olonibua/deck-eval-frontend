@@ -41,12 +41,17 @@ function pastedName(file: File, index: number): File {
 export function useIntakeFiles(initialIds: string[] = []) {
   const [files, setFiles] = useState<IntakeFileDTO[]>([]);
   const [pending, setPending] = useState<PendingUpload[]>([]);
+  const [initialLoaded, setInitialLoaded] = useState(false);
   const loadedInitial = useRef(false);
 
   useEffect(() => {
     if (loadedInitial.current || initialIds.length === 0) return;
     loadedInitial.current = true;
-    api.get<IntakeFileDTO[]>(`/admin/intake/files?ids=${initialIds.join(',')}`).then(setFiles).catch(() => undefined);
+    api
+      .get<IntakeFileDTO[]>(`/admin/intake/files?ids=${initialIds.join(',')}`)
+      .then(setFiles)
+      .catch(() => undefined)
+      .finally(() => setInitialLoaded(true));
   }, [initialIds]);
 
   const processingIds = files.filter((f) => f.status === 'processing').map((f) => f.id).join(',');
@@ -87,7 +92,16 @@ export function useIntakeFiles(initialIds: string[] = []) {
     setPending([]);
   }, []);
 
-  return { files, pending, add, remove, dismissFailed, reset, uploading: pending.some((p) => !p.error) };
+  return {
+    files,
+    pending,
+    add,
+    remove,
+    dismissFailed,
+    reset,
+    uploading: pending.some((p) => !p.error),
+    ready: initialIds.length === 0 || initialLoaded,
+  };
 }
 
 export type IntakeFiles = ReturnType<typeof useIntakeFiles>;

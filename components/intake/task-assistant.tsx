@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import type { ProjectDTO, TagDTO, TaskDraft } from '@/lib/shared';
 import { api } from '@/lib/client-api';
+import { usePersistentState } from '@/hooks/use-persistent-state';
 import { SegmentedTabs } from '../workspace/segmented-tabs';
 import { AiChat } from './ai-chat';
 import { SmartImport } from './smart-import';
@@ -13,7 +13,7 @@ type Mode = 'chat' | 'import';
 
 export function TaskAssistant({ aiEnabled, projects, tags }: { aiEnabled: boolean; projects: ProjectDTO[]; tags: TagDTO[] }) {
   const router = useRouter();
-  const [mode, setMode] = useState<Mode>('chat');
+  const [mode, setMode] = usePersistentState<Mode>('deck-eval:intake-mode', 'chat');
 
   async function create(draft: TaskDraft, viaAi: boolean): Promise<boolean> {
     try {

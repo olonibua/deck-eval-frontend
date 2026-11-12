@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type Dispatch, type SetStateAction } from 'react';
 
-export function usePersistentState<T>(key: string, initial: T) {
+export function usePersistentState<T>(key: string, initial: T): readonly [T, Dispatch<SetStateAction<T>>, boolean] {
   const [value, setValue] = useState<T>(initial);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     try {
@@ -12,16 +13,17 @@ export function usePersistentState<T>(key: string, initial: T) {
     } catch {
       // ignore unreadable storage
     }
+    setLoaded(true);
   }, [key]);
 
-  const update = (next: T) => {
-    setValue(next);
+  useEffect(() => {
+    if (!loaded) return;
     try {
-      localStorage.setItem(key, JSON.stringify(next));
+      localStorage.setItem(key, JSON.stringify(value));
     } catch {
       // ignore blocked storage
     }
-  };
+  }, [key, value, loaded]);
 
-  return [value, update] as const;
+  return [value, setValue, loaded] as const;
 }

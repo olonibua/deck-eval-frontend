@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { usePersistentState } from '@/hooks/use-persistent-state';
 import { ArrowUp, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import type { IntakeReply, IntakeTurn, ProjectDTO, TagDTO, TaskDraft } from '@/lib/shared';
@@ -20,27 +21,11 @@ interface SavedChat {
   turns: IntakeTurn[];
   draft: TaskDraft | null;
   version: number;
+  text: string;
+  attached: string[];
 }
 
-const EMPTY: SavedChat = { turns: [], draft: null, version: 0 };
-
-function loadChat(): SavedChat {
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    return raw ? { ...EMPTY, ...(JSON.parse(raw) as SavedChat) } : EMPTY;
-  } catch {
-    return EMPTY;
-  }
-}
-
-function saveChat(chat: SavedChat) {
-  try {
-    if (chat.turns.length) window.localStorage.setItem(STORAGE_KEY, JSON.stringify(chat));
-    else window.localStorage.removeItem(STORAGE_KEY);
-  } catch {
-    /* storage is a convenience only */
-  }
-}
+const EMPTY: SavedChat = { turns: [], draft: null, version: 0, text: '', attached: [] };
 
 function withLatestDraft(turns: IntakeTurn[], draft: TaskDraft | null): IntakeTurn[] {
   if (!draft) return turns;
@@ -84,32 +69,42 @@ export function AiChat({
   onUseSmartImport: () => void;
 }) {
   const confirm = useConfirm();
-  const [chat, setChat] = useState<SavedChat>(EMPTY);
-  const [loaded, setLoaded] = useState(false);
-  const [text, setText] = useState('');
-  const [attached, setAttached] = useState<string[]>([]);
+  const [stored, setStored, loaded] = usePersistentState<SavedChat>(STORAGE_KEY, EMPTY);
+  const chat: SavedChat = { ...EMPTY, ...stored };
+  const { text, attached } = chat;
+  const setChat = (update: (current: SavedChat) => Partial<SavedChat>) =>
+    setStored((current) => {
+      const full = { ...EMPTY, ...current };
+      return { ...full, ...update(full) };
+    });
+  const setText = (value: string) => setChat(() => ({ text: value }));
+  const setAttached = (update: (current: string[]) => string[]) => setChat((current) => ({ attached: update(current.attached) }));
   const [thinking, setThinking] = useState(false);
   const [creating, setCreating] = useState(false);
   const bottom = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setChat(loadChat());
-    setLoaded(true);
-  }, []);
-  useEffect(() => {
-    if (loaded) saveChat(chat);
-  }, [chat, loaded]);
-  useEffect(() => {
     bottom.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [chat.turns.length, thinking]);
 
-  const knownIds = useMemo(() => (loaded ? [...new Set(chat.turns.flatMap((t) => t.fileIds))] : []), [loaded, chat.turns]);
+  const knownIds = useMemo(
+    () => (loaded ? [...new Set([...chat.turns.flatMap((t) => t.fileIds), ...chat.attached])] : []),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [loaded],
+  );
   const intake = useIntakeFiles(knownIds);
   const fileNames = new Map(intake.files.map((f) => [f.id, f.name]));
   const attachedFiles = intake.files.filter((f) => attached.includes(f.id));
   const waiting = intake.uploading || attachedFiles.some((f) => f.status === 'processing');
   const failed = attachedFiles.filter((f) => f.status === 'failed');
-  const canSend = aiEnabled && !thinking && !waiting && failed.length === 0 && (text.trim().length > 0 || attached.length > 0);
+  const fileIds = intake.files.map((f) => f.id).join(',');
+  useEffect(() => {
+    if (!loaded || !intake.ready) return;
+    const present = new Set(fileIds.split(','));
+    setAttached((current) => (current.every((id) => present.has(id)) ? current : current.filter((id) => present.has(id))));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loaded, intake.ready, fileIds]);
+  const canSend = aiEnabled && !thinking && !waiting && failed.length === 0 && (text.trim().length > 0 || attachedFiles.length > 0);
 
   async function attach(files: File[]) {
     const added = await intake.add(files);
@@ -118,11 +113,11 @@ export function AiChat({
 
   async function send() {
     if (!canSend) return;
-    const userTurn: IntakeTurn = { role: 'user', text: text.trim(), fileIds: attached, draft: null };
+    const userTurn: IntakeTurn = { role: 'user', text: text.trim(), fileIds: attachedFiles.map((f) => f.id), draft: null };
     const turns = [...withLatestDraft(chat.turns, chat.draft), userTurn];
     setChat((current) => ({ ...current, turns }));
     setText('');
-    setAttached([]);
+    setAttached(() => []);
     setThinking(true);
     try {
       const reply = await api.post<IntakeReply>('/admin/intake/chat', { turns });
@@ -136,7 +131,7 @@ export function AiChat({
       toast.error((error as Error).message);
       setChat((current) => ({ ...current, turns: current.turns.slice(0, -1) }));
       setText(userTurn.text);
-      setAttached(userTurn.fileIds);
+      setAttached(() => userTurn.fileIds);
     } finally {
       setThinking(false);
     }
@@ -145,8 +140,8 @@ export function AiChat({
   async function startOver() {
     const ok = await confirm({ title: 'Start over?', description: 'This clears the conversation and the draft. Tasks you already created stay.', confirmLabel: 'Start over', destructive: true });
     if (!ok) return;
-    setChat(EMPTY);
-    setAttached([]);
+    setChat(() => EMPTY);
+    setAttached(() => []);
     intake.reset();
   }
 
@@ -156,7 +151,7 @@ export function AiChat({
     const ok = await onCreate(chat.draft);
     setCreating(false);
     if (ok) {
-      setChat(EMPTY);
+      setChat(() => EMPTY);
       intake.reset();
     }
   }

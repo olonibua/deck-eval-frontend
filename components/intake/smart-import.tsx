@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { usePersistentState } from '@/hooks/use-persistent-state';
 import { UploadCloud } from 'lucide-react';
 import { guessFileRoles, type IntakeFileDTO, type ProjectDTO, type TagDTO, type TaskDraft } from '@/lib/shared';
 import { Card } from '../ui/card';
@@ -32,15 +33,19 @@ function syncFiles(draft: TaskDraft, files: IntakeFileDTO[]): TaskDraft {
   return { ...draft, files: [...kept, ...fresh] };
 }
 
+const STORAGE_KEY = 'deck-eval:smart-import';
+
 export function SmartImport({ projects, tags, onCreate }: { projects: ProjectDTO[]; tags: TagDTO[]; onCreate: (draft: TaskDraft) => Promise<boolean> }) {
-  const intake = useIntakeFiles();
-  const [draft, setDraft] = useState(() => blankDraft(projects));
+  const [draft, setDraft, loaded] = usePersistentState<TaskDraft>(STORAGE_KEY, blankDraft(projects));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const initialIds = useMemo(() => (loaded ? draft.files.map((f) => f.fileId) : []), [loaded]);
+  const intake = useIntakeFiles(initialIds);
   const [version, setVersion] = useState(0);
   const [creating, setCreating] = useState(false);
 
   useEffect(() => {
-    setDraft((current) => syncFiles(current, intake.files));
-  }, [intake.files]);
+    if (loaded && intake.ready) setDraft((current) => syncFiles(current, intake.files));
+  }, [loaded, intake.ready, intake.files, setDraft]);
 
   async function create() {
     setCreating(true);
@@ -52,6 +57,8 @@ export function SmartImport({ projects, tags, onCreate }: { projects: ProjectDTO
       setVersion((v) => v + 1);
     }
   }
+
+  if (!loaded) return null;
 
   return (
     <div
